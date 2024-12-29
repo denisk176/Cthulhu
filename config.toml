@@ -1,0 +1,15 @@
+listen_address = "[::]:3000"
+
+[[ports]]
+label = "TEST"
+path = "/dev/ttyUSB0"
+
+#[[ports]]
+#label = "EX2300C"
+#path = "tcp://localhost:7001"
+#[[ports]]
+#label = "EX3300"
+#path = "tcp://localhost:7002"
+#[[ports]]
+#label = "Arista"
+#path = "tcp://localhost:7003"
