@@ -10,6 +10,7 @@ use serde::Serialize;
 use std::fs::{File, OpenOptions};
 use std::io::Write;
 use tokio::sync::RwLock;
+use tracing::info;
 use crate::switch::{DeviceInformation, PortCommand, PortCommandSender, PortStatus, PortUpdate, ProcessStage, SpawnedPort};
 
 #[derive(Default, Debug, Serialize, Clone)]
@@ -92,6 +93,7 @@ impl PortManager {
     pub async fn send_command(&self, port: &str, cmd: PortCommand) {
         let i = self.inner.read().await;
         if let Some(v) = i.port_commands.get(port) {
+            info!("Sending command to {port}: {cmd:?}");
             v.send(cmd).await.unwrap();
         }
     }

@@ -9,6 +9,7 @@ mod worker;
 pub use worker::process::ProcessStage;
 pub use crate::switch::worker::state::DeviceInformation;
 
+#[derive(Debug, Clone)]
 pub enum PortUpdate {
     PortStateTransition(ProcessStage, ProcessStage),
     PortStatusUpdate(PortStatus),
@@ -16,6 +17,7 @@ pub enum PortUpdate {
     PortNewInfoItem(DeviceInformation),
 }
 
+#[derive(Debug, Clone)]
 pub enum PortCommand {
     ResetJob,
 }

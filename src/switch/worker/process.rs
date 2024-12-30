@@ -147,9 +147,23 @@ impl ProcessStage {
                     actions: vec![
                         Action::SendLine("recovery".to_string()),
                     ],
-                }
+                },
+                StateTransition {
+                    target_state: ProcessStage::JunosAwaitBoot,
+                    condition: StateCondition::WaitForString("SCSI Status".to_string()),
+                    actions: vec![
+                        Action::AddDeviceInfo(DeviceInformation::SCSIErrors),
+                    ],
+                },
             ]),
             ProcessStage::JunosAwaitRecoveryShell => Ok(vec![
+                StateTransition {
+                    target_state: ProcessStage::JunosAwaitRecoveryShell,
+                    condition: StateCondition::WaitForString("SCSI Status".to_string()),
+                    actions: vec![
+                        Action::AddDeviceInfo(DeviceInformation::SCSIErrors),
+                    ],
+                },
                 StateTransition {
                     target_state: ProcessStage::JunosAnswerZeroize,
                     condition: StateCondition::WaitForRegex(r"\{[a-z0-9]+:0\}".to_string()),
@@ -219,7 +233,7 @@ impl ProcessStage {
                     condition: StateCondition::WaitForString("root@:RE:0%".to_string()),
                     actions: vec![
                         Action::SendLine("echo \"y\" | crontab -r".to_string()),
-                        Action::SendLine("rm -rfv /var/tmp/autoreload.* /tmp/autoreload.* /var/core/core.*".to_string()),
+                        Action::SendLine("rm -rfv /var/tmp/autoreload.* /tmp/autoreload.* /var/core/core.* /var/log/* /var/tmp/*".to_string()),
                         Action::SendLine("cli".to_string()),
                     ],
                 },
@@ -229,7 +243,7 @@ impl ProcessStage {
                     actions: vec![
                         Action::AddDeviceInfo(DeviceInformation::KeptHostname),
                         Action::SendLine("echo \"y\" | crontab -r".to_string()),
-                        Action::SendLine("rm -rfv /var/tmp/autoreload.* /tmp/autoreload.* /var/core/core.*".to_string()),
+                        Action::SendLine("rm -rfv /var/tmp/autoreload.* /tmp/autoreload.* /var/core/core.* /var/log/* /var/tmp/*".to_string()),
                         Action::SendLine("cli".to_string()),
                     ],
                 },
@@ -238,7 +252,7 @@ impl ProcessStage {
                     condition: StateCondition::WaitForString("Please re-install JUNOS".to_string()),
                     actions: vec![
                         Action::SendLine("echo \"y\" | crontab -r".to_string()),
-                        Action::SendLine("rm -rfv /var/tmp/autoreload.* /tmp/autoreload.* /var/core/core.*".to_string()),
+                        Action::SendLine("rm -rfv /var/tmp/autoreload.* /tmp/autoreload.* /var/core/core.*  /var/log/* /var/tmp/*".to_string()),
                         Action::SendLine("cli".to_string()),
                     ],
                 }
@@ -407,7 +421,9 @@ impl ProcessStage {
                     condition: StateCondition::WaitForString("localhost>".to_string()),
                     actions: vec![
                         Action::SendLine("show version".to_string()),
-                        Action::SendLine("bash rm -rfv /var/core/core.*".to_string())
+                        Action::SendLine("enable".to_string()),
+                        Action::SendLine("bash rm -rfv /var/core/core.*".to_string()),
+                        Action::SendLine("exit".to_string()),
                     ],
                 }
             ]),
@@ -492,7 +508,7 @@ impl ProcessStage {
             ProcessStage::Junos23AwaitZeroizeFinish => Ok(vec![
                 StateTransition {
                     target_state: ProcessStage::Junos23AwaitZeroizeFinish2,
-                    condition: StateCondition::WaitForRegex(r"FreeBSD/[Aa]".to_string()),
+                    condition: StateCondition::WaitForRegex(r"FreeBSD/[Aai]".to_string()),
                     actions: vec![],
                 }
             ]),

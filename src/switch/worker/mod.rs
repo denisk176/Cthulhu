@@ -79,28 +79,30 @@ pub fn worker_function(config: &PortConfig, update_sender: PortUpdateSender, com
 
     info!("Entering loop...");
 
-    'outer_loop: loop {
+    loop {
         let transitions = device_state.get_transitions()?;
         if let Some(t) = transitions.iter().find(|t| t.condition == StateCondition::Immediate) {
             transition_to_state(&mut device_state, &mut state, &mut p, t, "", "")?;
         } else {
-            if let Some(v) = command_receiver.try_recv()? {
-                match v {
-                    PortCommand::ResetJob => {
-                        let a = vec![
-                            Action::AddDeviceInfo(DeviceInformation::Aborted),
-                            Action::FinishJob,
-                        ];
-                        for action in a {
-                            action.perform(config, &mut state, containedwriter.clone(), &update_sender, &mut p, "", "")?;
-                        }
-                    }
-                }
-                continue 'outer_loop;
-            }
-
             let u = ReadUntil::Any(transitions.iter().map(|t| t.condition.to_needle().map(|v| v.unwrap())).collect::<color_eyre::Result<Vec<_>>>()?);
             'read_loop: loop {
+                if let Some(v) = command_receiver.try_recv()? {
+                    info!("Received command: {v:?}");
+                    match v {
+                        PortCommand::ResetJob => {
+                            device_state = ProcessStage::default();
+                            let a = vec![
+                                Action::AddDeviceInfo(DeviceInformation::Aborted),
+                                Action::FinishJob,
+                            ];
+                            for action in a {
+                                action.perform(config, &mut state, containedwriter.clone(), &update_sender, &mut p, "", "")?;
+                            }
+                        }
+                    }
+                    break 'read_loop;
+                }
+
                 // Try to handle a result from the switches.
                 let r_res = p.exp(&u);
                 match r_res {
