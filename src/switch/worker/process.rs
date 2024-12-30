@@ -332,11 +332,11 @@ impl ProcessStage {
                     condition: StateCondition::WaitForString("acpi0: Powering system off".to_string()),
                     actions: vec![],
                 },
-                // StateTransition {
-                //     target_state: ProcessStage::EndJob,
-                //     condition: StateCondition::WaitForString("All buffers synced.".to_string()),
-                //     actions: vec![],
-                // },
+                StateTransition {
+                    target_state: ProcessStage::EndJob,
+                    condition: StateCondition::WaitForString("Rebooting...".to_string()),
+                    actions: vec![],
+                },
                 StateTransition {
                     target_state: ProcessStage::EndJob,
                     condition: StateCondition::WaitForString("reboot: Power down".to_string()),
@@ -359,6 +359,7 @@ impl ProcessStage {
                     target_state: ProcessStage::AristaRebootAfterStartupConfigWipe,
                     condition: StateCondition::WaitForString("Aboot#".to_string()),
                     actions: vec![
+                        Action::SendLine("rm -r /mnt/flash/.persist".to_string()),
                         Action::SendLine("rm /mnt/flash/startup-config".to_string()),
                     ],
                 }
