@@ -2,7 +2,6 @@
 <html>
 <head>
     <meta charset="utf-8"/>
-    <meta http-equiv="refresh" content="1"/>
 </head>
 <body>
     <h1>{{port.label}}</h1>
@@ -12,4 +11,12 @@
 </pre>
 <p id="bottom"></p>
 </body>
+<script>
+    var reloadPage = function() {
+        document.location.reload()
+    }
+    window.onload = function () {
+        setTimeout(reloadPage, 1000);
+    }
+</script>
 </html>
