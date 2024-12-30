@@ -1,12 +1,11 @@
 use std::collections::HashMap;
-use std::fmt::Display;
 use std::path::PathBuf;
 use std::sync::{LazyLock, RwLock};
 use axum::extract::{Path, State};
 use axum::response::{Html, IntoResponse};
 use chrono::{DateTime, Utc};
 use include_dir::{include_dir, Dir};
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use tera::{Tera, Value};
 use tera_template_macro::TeraTemplate;
 use crate::switch::{DeviceInformation, PortStatus};

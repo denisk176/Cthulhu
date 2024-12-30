@@ -1,3 +1,4 @@
+use std::collections::BTreeMap;
 use std::fmt::Display;
 use std::future::Future;
 use std::ops::Add;
@@ -9,7 +10,7 @@ use serde::Serialize;
 use std::fs::{File, OpenOptions};
 use std::io::Write;
 use tokio::sync::RwLock;
-use crate::switch::{DeviceInformation, PortStatus, PortUpdate, ProcessStage, SpawnedPort};
+use crate::switch::{DeviceInformation, PortCommand, PortCommandSender, PortStatus, PortUpdate, ProcessStage, SpawnedPort};
 
 #[derive(Default, Debug, Serialize, Clone)]
 pub struct PortManagerEntry {
@@ -51,6 +52,7 @@ impl Display for PortStatus {
 
 struct PortManagerInner {
     ports: Vec<PortManagerEntry>,
+    port_commands: BTreeMap<String, PortCommandSender>,
 }
 
 #[derive(Clone)]
@@ -65,9 +67,16 @@ impl PortManager {
         Ok(Self {
             inner: Arc::new(RwLock::new( PortManagerInner {
                 ports: Vec::new(),
+                port_commands: BTreeMap::new(),
             })),
             manager_log: Arc::new(RwLock::new(f)),
         })
+    }
+
+    pub async fn register_port(&self, port: &SpawnedPort) -> color_eyre::Result<()> {
+        let mut i = self.inner.write().await;
+        i.port_commands.insert(port.config.label.clone(), port.sender.clone());
+        Ok(())
     }
 
     pub async fn get_ports(&self) -> Vec<PortManagerEntry> {
@@ -78,6 +87,13 @@ impl PortManager {
             }
             p
         }).collect()
+    }
+
+    pub async fn send_command(&self, port: &str, cmd: PortCommand) {
+        let i = self.inner.read().await;
+        if let Some(v) = i.port_commands.get(port) {
+            v.send(cmd).await.unwrap();
+        }
     }
 
     pub async fn spawn(ports: Vec<SpawnedPort>) -> color_eyre::Result<(Self, impl Future<Output = ()>)> {
@@ -136,6 +152,7 @@ impl PortManager {
 
 #[allow(irrefutable_let_patterns)]
 async fn port_update_listener(port: SpawnedPort, manager: PortManager) -> color_eyre::Result<()> {
+    manager.register_port(&port).await?;
     while let (ts, update) = port.receiver.recv().await? {
         manager.accept_update(&port.config.label, ts, update).await?;
     }

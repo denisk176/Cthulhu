@@ -5,7 +5,8 @@ use color_eyre::eyre::WrapErr;
 use io_tee::TeeReader;
 use tracing::{info, span, Level};
 use rexpect::ReadUntil;
-use crate::switch::{PortConfig, PortUpdate, PortUpdateSender};
+use crate::switch::{DeviceInformation, PortCommand, PortCommandReceiver, PortConfig, PortUpdate, PortUpdateSender};
+use crate::switch::worker::action::Action;
 use crate::switch::worker::logging::{ContainedWriter, TracingWriter};
 use crate::switch::worker::process::ProcessStage;
 use crate::switch::worker::state::{StateCondition, StateTransition, SwitchData};
@@ -30,8 +31,7 @@ fn make_log_writer(config: &PortConfig, state: &SwitchData) -> color_eyre::Resul
 }
 
 
-pub fn worker_function(config: &PortConfig, update_sender: PortUpdateSender, reader: Box<dyn Read + Send + 'static>, writer: Box<dyn Write + Send + 'static>) -> color_eyre::Result<()> {
-
+pub fn worker_function(config: &PortConfig, update_sender: PortUpdateSender, command_receiver: PortCommandReceiver, reader: Box<dyn Read + Send + 'static>, writer: Box<dyn Write + Send + 'static>) -> color_eyre::Result<()> {
     let mut state = SwitchData::default();
     let mut device_state = ProcessStage::default();
 
@@ -66,11 +66,11 @@ pub fn worker_function(config: &PortConfig, update_sender: PortUpdateSender, rea
         strip_ansi_escape_codes: true,
     });
 
-    let mut transition_to_state = |device_state: &mut ProcessStage, p: &mut RexpectSession, t: &StateTransition, d: &str, m: &str| -> color_eyre::Result<()> {
+    let transition_to_state = |device_state: &mut ProcessStage, state: &mut SwitchData, p: &mut RexpectSession, t: &StateTransition, d: &str, m: &str| -> color_eyre::Result<()> {
         let old_state = device_state.clone();
         *device_state = t.target_state;
         for action in &t.actions {
-            action.perform(config, &mut state, containedwriter.clone(), &update_sender, p, &d, &m)?;
+            action.perform(config, state, containedwriter.clone(), &update_sender, p, &d, &m)?;
         }
         info!("State transition: {:?} -> {:?}", old_state, t.target_state);
         update_sender.send(PortUpdate::PortStateTransition(old_state, t.target_state))?;
@@ -79,11 +79,26 @@ pub fn worker_function(config: &PortConfig, update_sender: PortUpdateSender, rea
 
     info!("Entering loop...");
 
-    loop {
+    'outer_loop: loop {
         let transitions = device_state.get_transitions()?;
         if let Some(t) = transitions.iter().find(|t| t.condition == StateCondition::Immediate) {
-            transition_to_state(&mut device_state, &mut p, t, "", "")?;
+            transition_to_state(&mut device_state, &mut state, &mut p, t, "", "")?;
         } else {
+            if let Some(v) = command_receiver.try_recv()? {
+                match v {
+                    PortCommand::ResetJob => {
+                        let a = vec![
+                            Action::AddDeviceInfo(DeviceInformation::Aborted),
+                            Action::FinishJob,
+                        ];
+                        for action in a {
+                            action.perform(config, &mut state, containedwriter.clone(), &update_sender, &mut p, "", "")?;
+                        }
+                    }
+                }
+                continue 'outer_loop;
+            }
+
             let u = ReadUntil::Any(transitions.iter().map(|t| t.condition.to_needle().map(|v| v.unwrap())).collect::<color_eyre::Result<Vec<_>>>()?);
             'read_loop: loop {
                 // Try to handle a result from the switches.
@@ -92,7 +107,7 @@ pub fn worker_function(config: &PortConfig, update_sender: PortUpdateSender, rea
                     Ok((d, m)) => {
                         't_test: for t in &transitions {
                             if t.condition.matches_result(&m)? {
-                                transition_to_state(&mut device_state, &mut p, t, &d, &m)?;
+                                transition_to_state(&mut device_state, &mut state, &mut p, t, &d, &m)?;
                                 break 't_test;
                             }
                         }

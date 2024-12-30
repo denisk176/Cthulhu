@@ -173,7 +173,7 @@ impl ProcessStage {
                             loop {
                                 match p.exp_string("#") {
                                     Ok(_) => break,
-                                    Err(rexpect::error::Error::Timeout {..}) => {},
+                                    Err(rexpect::error::Error::Timeout { .. }) => {},
                                     Err(e) => return Err(e).context("failed to fix FS"),
                                 }
                             }
@@ -182,7 +182,7 @@ impl ProcessStage {
                                 loop {
                                     match p.exp_string("#") {
                                         Ok(_) => break,
-                                        Err(rexpect::error::Error::Timeout {..}) => {},
+                                        Err(rexpect::error::Error::Timeout { .. }) => {},
                                         Err(e) => return Err(e).context("failed to fix FS"),
                                     }
                                 }
@@ -246,26 +246,42 @@ impl ProcessStage {
             ProcessStage::JunosHappyCli => Ok(vec![
                 StateTransition {
                     target_state: ProcessStage::JunosVersionOutput,
-                    condition: StateCondition::WaitForString("root>".to_string()),
+                    condition: StateCondition::WaitForRegex(r"root(@[A-Za-z0-9\-]+)?>".to_string()),
                     actions: vec![
                         Action::SendLine("show version | no-more".to_string())
                     ],
-                }
+                },
+                StateTransition {
+                    target_state: ProcessStage::JunosVersionOutput,
+                    condition: StateCondition::WaitForRegex(r"root@[A-Za-z0-9\-]+>".to_string()),
+                    actions: vec![
+                        Action::AddDeviceInfo(DeviceInformation::KeptHostname),
+                        Action::SendLine("show version | no-more".to_string()),
+                    ],
+                },
             ]),
             ProcessStage::JunosBackupImageCli => Ok(vec![
                 StateTransition {
                     target_state: ProcessStage::JunosHappyCli,
-                    condition: StateCondition::WaitForString("root>".to_string()),
+                    condition: StateCondition::WaitForRegex(r"root(@[A-Za-z0-9\-]+)?>".to_string()),
                     actions: vec![
                         Action::SendLine("request system snapshot slice alternate".to_string())
                     ],
-                }
+                },
+                StateTransition {
+                    target_state: ProcessStage::JunosHappyCli,
+                    condition: StateCondition::WaitForRegex(r"root@[A-Za-z0-9\-]+>".to_string()),
+                    actions: vec![
+                        Action::AddDeviceInfo(DeviceInformation::KeptHostname),
+                        Action::SendLine("request system snapshot slice alternate".to_string())
+                    ],
+                },
             ]),
 
             ProcessStage::JunosVersionOutput => Ok(vec![
                 StateTransition {
                     target_state: ProcessStage::JunosChassisOutput,
-                    condition: StateCondition::WaitForString("root>".to_string()),
+                    condition: StateCondition::WaitForRegex(r"root(@[A-Za-z0-9\-]+)?>".to_string()),
                     actions: vec![
                         Action::Function(Box::new(|state, _, data, _| {
                             let r = RegexBuilder::new(r"(?:Model: (?<model>[a-zA-Z0-9\-]+)$)|(?:Junos: (?<version>[0-9a-zA-Z\-\.]+)$)")
@@ -288,7 +304,7 @@ impl ProcessStage {
             ProcessStage::JunosChassisOutput => Ok(vec![
                 StateTransition {
                     target_state: ProcessStage::JunosPoweroffConfirm,
-                    condition: StateCondition::WaitForString("root>".to_string()),
+                    condition: StateCondition::WaitForRegex(r"root(@[A-Za-z0-9\-]+)?>".to_string()),
                     actions: vec![
                         Action::Function(Box::new(|state, _, data, _| {
                             let r = RegexBuilder::new(r"^Chassis\s+(?<serial>[A-Za-z0-9]+)\s+.*$")
@@ -476,8 +492,7 @@ impl ProcessStage {
                 StateTransition {
                     target_state: ProcessStage::Junos23AwaitZeroizeFinish2,
                     condition: StateCondition::WaitForRegex(r"FreeBSD/[Aa]".to_string()),
-                    actions: vec![
-                    ],
+                    actions: vec![],
                 }
             ]),
 

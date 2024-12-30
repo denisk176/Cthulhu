@@ -17,6 +17,7 @@ pub enum DeviceInformation {
     ReadonlyFlash,
     SCSIErrors,
     KeptHostname,
+    Aborted,
 }
 
 impl DeviceInformation {
@@ -30,6 +31,7 @@ impl DeviceInformation {
             DeviceInformation::ReadonlyFlash => DeviceInformationType::Error,
             DeviceInformation::SCSIErrors => DeviceInformationType::Error,
             DeviceInformation::KeptHostname => DeviceInformationType::Warning,
+            DeviceInformation::Aborted => DeviceInformationType::Error,
         }
     }
 }

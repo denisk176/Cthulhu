@@ -31,15 +31,10 @@
             {% set port = ports | nth(n=port_n) %}
             <table class="inner">
                 <tr style="background-color: {{port.status | csscolor}}">
-                    <td></td>
-                    <td><b><a href="/port/{{port.label}}" target="_blank">{{ port.label }}</a></b></td>
-                    <td></td>
-                </tr>
-                <tr>
                     <td>
                         {{port.last_update | format_timeago}}
                     </td>
-                    <td></td>
+                    <td><b><a href="/port/{{port.label}}" target="_blank">{{ port.label }}</a></b></td>
                     <td>
                         {{port.status | format_status}}
                     </td>

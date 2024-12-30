@@ -1,3 +1,4 @@
+use async_channel::TryRecvError;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use crate::config::PortConfig;
@@ -15,12 +16,32 @@ pub enum PortUpdate {
     PortNewInfoItem(DeviceInformation),
 }
 
+pub enum PortCommand {
+    ResetJob,
+}
+
 pub type PortUpdateChannelType = (DateTime<Utc>, PortUpdate);
 pub type PortUpdateReceiver = async_channel::Receiver<PortUpdateChannelType>;
+pub type PortCommandSender = async_channel::Sender<PortCommand>;
 
 #[derive(Clone)]
 pub struct PortUpdateSender {
     inner: async_channel::Sender<PortUpdateChannelType>,
+}
+
+#[derive(Clone)]
+pub struct PortCommandReceiver {
+    inner: async_channel::Receiver<PortCommand>,
+}
+
+impl PortCommandReceiver {
+    pub fn try_recv(&self) -> color_eyre::Result<Option<PortCommand>> {
+        match self.inner.try_recv() {
+            Ok(port) => Ok(Some(port)),
+            Err(TryRecvError::Empty) => Ok(None),
+            Err(TryRecvError::Closed) => Ok(None),
+        }
+    }
 }
 
 impl PortUpdateSender {
@@ -34,10 +55,13 @@ impl PortUpdateSender {
 pub fn run_port_sync(config: &PortConfig) -> color_eyre::Result<()> {
     let (update_sender, _update_receiver) = async_channel::unbounded::<PortUpdateChannelType>();
     let update_sender = PortUpdateSender { inner: update_sender };
+    let (_command_sender, command_receiver) = async_channel::unbounded::<PortCommand>();
+    let command_receiver = PortCommandReceiver { inner: command_receiver };
+
 
     let (r, w) = config.connect()?;
 
-    worker_function(config, update_sender, r, w)?;
+    worker_function(config, update_sender, command_receiver, r, w)?;
 
     Ok(())
 }
@@ -45,18 +69,22 @@ pub fn run_port_sync(config: &PortConfig) -> color_eyre::Result<()> {
 pub struct SpawnedPort {
     pub config: PortConfig,
     pub receiver: PortUpdateReceiver,
+    pub sender: PortCommandSender,
 }
 
 pub fn spawn_port(config: PortConfig) -> color_eyre::Result<SpawnedPort> {
     let (update_sender, update_receiver) = async_channel::unbounded::<PortUpdateChannelType>();
     let update_sender = PortUpdateSender { inner: update_sender };
 
+    let (command_sender, command_receiver) = async_channel::unbounded::<PortCommand>();
+    let command_receiver = PortCommandReceiver { inner: command_receiver };
+
     let (r, w) = config.connect()?;
     let config_copy = config.clone();
 
     std::thread::Builder::new().name(format!("port {}", config.path))
         .spawn(move || {
-            let res = worker_function(&config, update_sender.clone(), r, w);
+            let res = worker_function(&config, update_sender.clone(), command_receiver, r, w);
             if let Err(e) = res {
                 eprintln!("Worker thread for port {} exited with error: {}", config.path, e);
                 update_sender.send(PortUpdate::PortStatusUpdate(PortStatus::Fatal)).unwrap();
@@ -69,6 +97,7 @@ pub fn spawn_port(config: PortConfig) -> color_eyre::Result<SpawnedPort> {
     Ok(SpawnedPort {
         config: config_copy,
         receiver: update_receiver,
+        sender: command_sender,
     })
 }
 
