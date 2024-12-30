@@ -391,6 +391,7 @@ impl ProcessStage {
                     condition: StateCondition::WaitForString("localhost>".to_string()),
                     actions: vec![
                         Action::SendLine("show version".to_string()),
+                        Action::SendLine("bash rm -rfv /var/core/core.*".to_string())
                     ],
                 }
             ]),
