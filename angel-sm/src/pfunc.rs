@@ -1,8 +1,8 @@
-use color_eyre::eyre::Context;
-use regex::RegexBuilder;
-use cthulhu_common::devinfo::DeviceInformation;
-use swexpect::SwitchExpect;
 use crate::AngelJob;
+use color_eyre::eyre::Context;
+use cthulhu_common::devinfo::DeviceInformation;
+use regex::RegexBuilder;
+use swexpect::SwitchExpect;
 
 pub enum ProcessFunction {
     FixFS,
@@ -12,12 +12,21 @@ pub enum ProcessFunction {
 }
 
 impl ProcessFunction {
-    pub async fn execute<T: AngelJob>(&self, job: &mut T, p: &mut SwitchExpect, data: &str, _mat: &str) -> color_eyre::Result<()> {
+    pub async fn execute<T: AngelJob>(
+        &self,
+        job: &mut T,
+        p: &mut SwitchExpect,
+        data: &str,
+        _mat: &str,
+    ) -> color_eyre::Result<()> {
         match self {
             ProcessFunction::FixFS => {
                 let bdevregex = RegexBuilder::new(r"ufs: (?<device>[/a-zA-Z0-9]+) \(.*\)$")
-                    .crlf(true).multi_line(true).build()?;
-                let devices: Vec<String> = bdevregex.captures_iter(data)
+                    .crlf(true)
+                    .multi_line(true)
+                    .build()?;
+                let devices: Vec<String> = bdevregex
+                    .captures_iter(data)
                     .map(|c| c.name("device").unwrap().as_str().to_string())
                     .collect();
 
@@ -28,7 +37,8 @@ impl ProcessFunction {
                     p.exp_string("#").await.context("failed to fix fs")?;
                 }
                 p.send_line("reboot").await.context("failed to fix fs")?;
-                job.add_information(DeviceInformation::AttemptedToFixFilesystemIssues).await?;
+                job.add_information(DeviceInformation::AttemptedToFixFilesystemIssues)
+                    .await?;
                 Ok(())
             }
             ProcessFunction::CaptureJunosVersion => {
@@ -36,20 +46,29 @@ impl ProcessFunction {
                     .multi_line(true).crlf(true).build()?;
                 for cap in r.captures_iter(&data) {
                     if let Some(model) = cap.name("model") {
-                        job.add_information(DeviceInformation::Model(model.as_str().to_string())).await?;
+                        job.add_information(DeviceInformation::Model(model.as_str().to_string()))
+                            .await?;
                     }
                     if let Some(version) = cap.name("version") {
-                        job.add_information(DeviceInformation::SoftwareVersion(version.as_str().to_string())).await?;
+                        job.add_information(DeviceInformation::SoftwareVersion(
+                            version.as_str().to_string(),
+                        ))
+                        .await?;
                     }
                 }
                 Ok(())
             }
             ProcessFunction::CaptureChassisOutput => {
                 let r = RegexBuilder::new(r"^Chassis\s+(?<serial>[A-Za-z0-9]+)\s+.*$")
-                    .multi_line(true).crlf(true).build()?;
+                    .multi_line(true)
+                    .crlf(true)
+                    .build()?;
                 for cap in r.captures_iter(&data) {
                     if let Some(serial) = cap.name("serial") {
-                        job.add_information(DeviceInformation::SerialNumber(serial.as_str().to_string())).await?;
+                        job.add_information(DeviceInformation::SerialNumber(
+                            serial.as_str().to_string(),
+                        ))
+                        .await?;
                     }
                 }
                 Ok(())
@@ -59,13 +78,20 @@ impl ProcessFunction {
                     .multi_line(true).crlf(true).build()?;
                 for cap in r.captures_iter(&data) {
                     if let Some(model) = cap.name("model") {
-                        job.add_information(DeviceInformation::Model(model.as_str().to_string())).await?;
+                        job.add_information(DeviceInformation::Model(model.as_str().to_string()))
+                            .await?;
                     }
                     if let Some(serial) = cap.name("serial") {
-                        job.add_information(DeviceInformation::SerialNumber(serial.as_str().to_string())).await?;
+                        job.add_information(DeviceInformation::SerialNumber(
+                            serial.as_str().to_string(),
+                        ))
+                        .await?;
                     }
                     if let Some(version) = cap.name("version") {
-                        job.add_information(DeviceInformation::SoftwareVersion(version.as_str().to_string())).await?;
+                        job.add_information(DeviceInformation::SoftwareVersion(
+                            version.as_str().to_string(),
+                        ))
+                        .await?;
                     }
                 }
                 Ok(())

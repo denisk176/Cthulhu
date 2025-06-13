@@ -1,10 +1,10 @@
 use crate::ports::SwitchSerialPort;
+use color_eyre::eyre::OptionExt;
 use pin_project::pin_project;
 use std::io::Error;
 use std::path::Path;
 use std::pin::Pin;
 use std::task::{Context, Poll};
-use color_eyre::eyre::OptionExt;
 use tokio::io::{AsyncRead, AsyncWrite, ReadBuf};
 use tokio_serial::SerialStream;
 
@@ -16,7 +16,13 @@ pub struct TTYSwitchSerialPort {
 
 impl TTYSwitchSerialPort {
     pub async fn new<P: AsRef<Path>>(port: P, baudrate: u32) -> color_eyre::Result<Self> {
-        let builder = tokio_serial::new(port.as_ref().as_os_str().to_str().ok_or_eyre("failed to convert path")?, baudrate);
+        let builder = tokio_serial::new(
+            port.as_ref()
+                .as_os_str()
+                .to_str()
+                .ok_or_eyre("failed to convert path")?,
+            baudrate,
+        );
         let stream = SerialStream::open(&builder)?;
         Ok(TTYSwitchSerialPort { stream })
     }

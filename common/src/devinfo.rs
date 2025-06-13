@@ -15,6 +15,7 @@ pub enum DeviceInformation {
     BootLoop,
     UnableToLoadAKernel,
     AlternateImage,
+    StrangeCLIPrompt,
 }
 
 impl DeviceInformation {
@@ -33,6 +34,7 @@ impl DeviceInformation {
             DeviceInformation::FailedToEnterSingleUserMode => DeviceInformationType::Error,
             DeviceInformation::UnableToLoadAKernel => DeviceInformationType::Warning,
             DeviceInformation::AlternateImage => DeviceInformationType::Warning,
+            DeviceInformation::StrangeCLIPrompt => DeviceInformationType::Warning,
         }
     }
 }

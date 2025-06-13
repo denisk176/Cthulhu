@@ -1,8 +1,8 @@
-use std::fmt::Display;
-use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
 use crate::devinfo::DeviceInformation;
 use crate::stages::ProcessStage;
+use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
+use std::fmt::Display;
 
 #[derive(Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Debug, Serialize, Deserialize)]
 pub enum PortJobStatus {
@@ -33,7 +33,7 @@ impl PortJobStatus {
             _ => false,
         }
     }
-    
+
     pub fn is_finished(&self) -> bool {
         match self {
             PortJobStatus::FinishSuccess => true,

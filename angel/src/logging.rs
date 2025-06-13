@@ -1,5 +1,6 @@
-use std::fs::File;
+use cthulhu_config::angel::AngelConfig;
 use pin_project::pin_project;
+use std::fs::File;
 use std::io::{Error, Write};
 use std::path::Path;
 use std::pin::Pin;
@@ -8,12 +9,11 @@ use std::sync::{Arc, Mutex};
 use std::task::{Context, Poll, ready};
 use tokio::io::{AsyncRead, AsyncWrite, ReadBuf};
 use tokio_util::io::InspectReader;
-use tracing::{info, Level};
 use tracing::level_filters::LevelFilter;
-use tracing_subscriber::{Layer, Registry};
+use tracing::{Level, info};
 use tracing_subscriber::fmt::MakeWriter;
 use tracing_subscriber::layer::SubscriberExt;
-use cthulhu_config::angel::AngelConfig;
+use tracing_subscriber::{Layer, Registry};
 
 pub trait SerialIO: AsyncRead + AsyncWrite + Unpin + Send + Sync {}
 impl<T: AsyncRead + AsyncWrite + Unpin + Send + Sync> SerialIO for T {}
@@ -26,7 +26,7 @@ pub struct SerialLogger<IO: SerialIO> {
 }
 
 impl<IO: SerialIO> SerialLogger<IO> {
-    pub fn new(stream: IO,) -> Self {
+    pub fn new(stream: IO) -> Self {
         Self {
             stream,
             buffer: String::new(),
@@ -129,9 +129,11 @@ impl<'a> MakeWriter<'a> for TracingTarget {
 pub async fn setup_tracing(config: &AngelConfig) -> color_eyre::Result<TracingTarget> {
     let max_log_level =
         Level::from_str(&(config.log_level.as_ref().unwrap_or(&"info".to_string())))?;
-    let target = TracingTarget { target: Arc::new(Mutex::new(None)), };
-    let stdsub = tracing_subscriber::fmt::layer()
-        .with_filter(LevelFilter::from_level(max_log_level));
+    let target = TracingTarget {
+        target: Arc::new(Mutex::new(None)),
+    };
+    let stdsub =
+        tracing_subscriber::fmt::layer().with_filter(LevelFilter::from_level(max_log_level));
     let filesub = tracing_subscriber::fmt::layer()
         .with_ansi(false)
         .with_writer(target.clone())
@@ -141,8 +143,15 @@ pub async fn setup_tracing(config: &AngelConfig) -> color_eyre::Result<TracingTa
     Ok(target)
 }
 
-pub async fn wrap_raw_serial_log<IO: 'static + AsyncRead + AsyncWrite + Unpin  + Send + Sync>(inp: IO) -> color_eyre::Result<(impl 'static + AsyncRead + AsyncWrite + Unpin  + Send + Sync, TracingTarget)> {
-    let target = TracingTarget { target: Arc::new(Mutex::new(None)), };
+pub async fn wrap_raw_serial_log<IO: 'static + AsyncRead + AsyncWrite + Unpin + Send + Sync>(
+    inp: IO,
+) -> color_eyre::Result<(
+    impl 'static + AsyncRead + AsyncWrite + Unpin + Send + Sync,
+    TracingTarget,
+)> {
+    let target = TracingTarget {
+        target: Arc::new(Mutex::new(None)),
+    };
     let io = {
         let target = target.clone();
         InspectReader::new(inp, move |d| {

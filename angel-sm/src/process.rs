@@ -1,10 +1,10 @@
-use std::time::Duration;
+use crate::action::Action;
+use crate::pfunc::ProcessFunction;
+use crate::state::{StateCondition, StateTransition};
 use cthulhu_common::devinfo::DeviceInformation;
 use cthulhu_common::stages::ProcessStage;
 use cthulhu_common::status::PortJobStatus;
-use crate::action::Action;
-use crate::state::{StateCondition, StateTransition};
-use crate::pfunc::ProcessFunction;
+use std::time::Duration;
 
 pub trait ProcessStageTransition {
     fn get_transitions(&self) -> color_eyre::Result<Vec<StateTransition>>;
@@ -244,6 +244,27 @@ impl ProcessStageTransition for ProcessStage {
                     condition: StateCondition::WaitForRegex(r"root@[A-Za-z0-9\-]+:RE:0%".to_string()),
                     actions: vec![
                         Action::AddDeviceInfo(DeviceInformation::KeptHostname),
+                        Action::SendLine("echo \"y\" | crontab -r".to_string()),
+                        Action::SendLine("rm -rfv /var/tmp/autoreload.* /tmp/autoreload.* /var/core/core.* /var/log/* /var/tmp/*".to_string()),
+                        Action::SendLine("cli".to_string()),
+                    ],
+                },
+                StateTransition {
+                    target_state: ProcessStage::JunosHappyCli,
+                    condition: StateCondition::WaitForString("root@:LC:0%".to_string()),
+                    actions: vec![
+                        Action::AddDeviceInfo(DeviceInformation::StrangeCLIPrompt),
+                        Action::SendLine("echo \"y\" | crontab -r".to_string()),
+                        Action::SendLine("rm -rfv /var/tmp/autoreload.* /tmp/autoreload.* /var/core/core.* /var/log/* /var/tmp/*".to_string()),
+                        Action::SendLine("cli".to_string()),
+                    ],
+                },
+                StateTransition {
+                    target_state: ProcessStage::JunosHappyCli,
+                    condition: StateCondition::WaitForRegex(r"root@[A-Za-z0-9\-]+:LC:0%".to_string()),
+                    actions: vec![
+                        Action::AddDeviceInfo(DeviceInformation::KeptHostname),
+                        Action::AddDeviceInfo(DeviceInformation::StrangeCLIPrompt),
                         Action::SendLine("echo \"y\" | crontab -r".to_string()),
                         Action::SendLine("rm -rfv /var/tmp/autoreload.* /tmp/autoreload.* /var/core/core.* /var/log/* /var/tmp/*".to_string()),
                         Action::SendLine("cli".to_string()),

@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
 use cthulhu_common::devinfo::DeviceInformation;
 use cthulhu_common::status::PortJobStatus;
-use include_dir::{include_dir, Dir};
+use include_dir::{Dir, include_dir};
 use std::collections::HashMap;
 use std::sync::LazyLock;
 use tera::{Tera, Value};
@@ -48,7 +48,6 @@ fn is_finished(input: &Value, _args: &HashMap<String, Value>) -> tera::Result<Va
     Ok(serde_json::to_value(d)?)
 }
 
-
 fn format_timeago(input: &Value, _args: &HashMap<String, Value>) -> tera::Result<Value> {
     let v: DateTime<Utc> = serde_json::from_value(input.clone())?;
     let v = chrono_humanize::HumanTime::from(v);
@@ -61,7 +60,7 @@ fn get_manuf(input: &Value, _args: &HashMap<String, Value>) -> tera::Result<Valu
     for i in v {
         match i {
             DeviceInformation::Vendor(v) => return Ok(serde_json::to_value(v)?),
-            _ => {},
+            _ => {}
         }
     }
     Ok(serde_json::to_value("UNKN")?)
@@ -72,7 +71,7 @@ fn get_sn(input: &Value, _args: &HashMap<String, Value>) -> tera::Result<Value> 
     for i in v {
         match i {
             DeviceInformation::SerialNumber(v) => return Ok(serde_json::to_value(v)?),
-            _ => {},
+            _ => {}
         }
     }
     Ok(serde_json::to_value("UNKN")?)
@@ -83,12 +82,11 @@ fn get_model(input: &Value, _args: &HashMap<String, Value>) -> tera::Result<Valu
     for i in v {
         match i {
             DeviceInformation::Model(v) => return Ok(serde_json::to_value(v)?),
-            _ => {},
+            _ => {}
         }
     }
     Ok(serde_json::to_value("UNKN")?)
 }
-
 
 fn column_calc(input: &Value, args: &HashMap<String, Value>) -> tera::Result<Value> {
     // This could be done within tera itself; but time crunch
@@ -101,7 +99,8 @@ fn column_calc(input: &Value, args: &HashMap<String, Value>) -> tera::Result<Val
 fn make_tera() -> Tera {
     let mut t = Tera::default();
     for f in TEMPLATE_DIR.files() {
-        t.add_raw_template(f.path().to_str().unwrap(), f.contents_utf8().unwrap()).expect("Failed to add template");
+        t.add_raw_template(f.path().to_str().unwrap(), f.contents_utf8().unwrap())
+            .expect("Failed to add template");
     }
     t.register_filter("csscolor", csscolor_filter);
     t.register_filter("format_status", format_status);
@@ -117,7 +116,4 @@ fn make_tera() -> Tera {
 
 static TEMPLATE_DIR: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/src/web/templates");
 
-
-pub static TERA: LazyLock<RwLock<Tera>> = LazyLock::new(|| {
-    RwLock::new(make_tera())
-});
+pub static TERA: LazyLock<RwLock<Tera>> = LazyLock::new(|| RwLock::new(make_tera()));

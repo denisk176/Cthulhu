@@ -1,17 +1,17 @@
 use crate::manager::JobManager;
 use crate::mqtt::{BroadcastSender, MQTTSender};
 use crate::web::pages::{abort, devinfo_page, header_page, index, index_portstatus, logs_page};
+use crate::web::serial::serial_handler;
+use axum::Router;
 use axum::body::Body;
 use axum::extract::Path;
-use axum::http::{header, HeaderValue, StatusCode};
+use axum::http::{HeaderValue, StatusCode, header};
 use axum::response::{IntoResponse, Response};
 use axum::routing::get;
-use axum::Router;
 use cthulhu_config::heaven::HeavenConfig;
-use include_dir::{include_dir, Dir};
+use include_dir::{Dir, include_dir};
 use tower_http::catch_panic::CatchPanicLayer;
 use tracing::info;
-use crate::web::serial::serial_handler;
 
 mod pages;
 
@@ -31,7 +31,11 @@ pub async fn web_main(
     mqtt: MQTTSender,
     broadcast: BroadcastSender,
 ) -> color_eyre::Result<()> {
-    let state = WebState { manager, mqtt, broadcast };
+    let state = WebState {
+        manager,
+        mqtt,
+        broadcast,
+    };
     let app = Router::new()
         .route("/", get(index))
         .route("/portstatus.html", get(index_portstatus))

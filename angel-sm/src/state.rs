@@ -1,8 +1,7 @@
 use crate::action::Action;
+use cthulhu_common::stages::ProcessStage;
 use regex::Regex;
 use swexpect::hay::ReadUntil;
-use cthulhu_common::stages::ProcessStage;
-
 
 #[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq)]
 pub enum StateCondition {
@@ -37,4 +36,3 @@ pub struct StateTransition {
     pub actions: Vec<Action>,
     pub condition: StateCondition,
 }
-

@@ -7,14 +7,8 @@ use tracing::trace;
 
 #[derive(Clone, Debug)]
 pub enum MQTTBroadcast {
-    JobUpdate {
-        label: String,
-        update: JobUpdate,
-    },
-    SerialData {
-        label: String,
-        data: Vec<u8>,
-    }
+    JobUpdate { label: String, update: JobUpdate },
+    SerialData { label: String, data: Vec<u8> },
 }
 
 pub type BroadcastSender = Sender<MQTTBroadcast>;
@@ -23,7 +17,11 @@ pub fn create_broadcast() -> BroadcastSender {
     broadcast::channel(16).0
 }
 
-pub async fn mqtt_main(sender: BroadcastSender, mqtt_client: AsyncClient, mut eventloop: EventLoop) -> color_eyre::Result<()> {
+pub async fn mqtt_main(
+    sender: BroadcastSender,
+    mqtt_client: AsyncClient,
+    mut eventloop: EventLoop,
+) -> color_eyre::Result<()> {
     mqtt_client.subscribe("+/update", QoS::AtLeastOnce).await?;
     mqtt_client.subscribe("+/serial", QoS::AtLeastOnce).await?;
 
@@ -58,12 +56,16 @@ pub struct MQTTSender {
 
 impl MQTTSender {
     pub fn new(mqtt_client: AsyncClient) -> color_eyre::Result<Self> {
-        Ok(Self { client: mqtt_client })
+        Ok(Self {
+            client: mqtt_client,
+        })
     }
 
     pub async fn send_command(&self, port: &str, command: JobCommand) -> color_eyre::Result<()> {
         let data = serde_json::to_vec(&command)?;
-        self.client.publish(format!("{}/command", port), QoS::AtMostOnce, false, data).await?;
+        self.client
+            .publish(format!("{}/command", port), QoS::AtMostOnce, false, data)
+            .await?;
         Ok(())
     }
 }

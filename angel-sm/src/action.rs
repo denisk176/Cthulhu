@@ -1,10 +1,10 @@
-use std::time::Duration;
-use tracing::info;
-use cthulhu_common::devinfo::{DeviceInformation, DeviceInformationType};
-use cthulhu_common::status::{PortJobStatus, JobUpdate};
-use swexpect::SwitchExpect;
 use crate::AngelJob;
 use crate::pfunc::ProcessFunction;
+use cthulhu_common::devinfo::{DeviceInformation, DeviceInformationType};
+use cthulhu_common::status::{JobUpdate, PortJobStatus};
+use std::time::Duration;
+use swexpect::SwitchExpect;
+use tracing::info;
 
 pub enum Action {
     Send(String),
@@ -21,7 +21,13 @@ pub enum Action {
 }
 
 impl Action {
-    pub async fn perform<T: AngelJob>(&self, job: &mut T, p: &mut SwitchExpect, data: &str, mat: &str) -> color_eyre::Result<()> {
+    pub async fn perform<T: AngelJob>(
+        &self,
+        job: &mut T,
+        p: &mut SwitchExpect,
+        data: &str,
+        mat: &str,
+    ) -> color_eyre::Result<()> {
         match self {
             Action::Send(s) => {
                 p.send(s).await?;
@@ -39,9 +45,7 @@ impl Action {
                 p.send_control(*c).await?;
                 Ok(())
             }
-            Action::Function(pf) => {
-                pf.execute(job, p, data, mat).await
-            }
+            Action::Function(pf) => pf.execute(job, p, data, mat).await,
             Action::FinishJob => {
                 info!("Job finished!");
                 info!("Information items:");
@@ -56,7 +60,8 @@ impl Action {
                     None => PortJobStatus::Idle,
                 };
 
-                job.send_update(JobUpdate::JobStatusUpdate(new_status)).await?;
+                job.send_update(JobUpdate::JobStatusUpdate(new_status))
+                    .await?;
                 //job.reset().await?;
                 Ok(())
             }
@@ -79,7 +84,7 @@ impl Action {
             Action::AddDeviceInfo(i) => {
                 job.add_information(i.clone()).await?;
                 Ok(())
-            },
+            }
             Action::SetupJob => {
                 job.init_job().await?;
                 Ok(())

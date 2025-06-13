@@ -1,7 +1,7 @@
 use crate::args::Cli;
 use crate::job::ActiveJob;
-use crate::logging::{setup_tracing, wrap_raw_serial_log, SerialLogger};
-use crate::mqtt::{create_mqtt_sender_from_config, wrap_mqtt_serial_log, MQTTSender};
+use crate::logging::{SerialLogger, setup_tracing, wrap_raw_serial_log};
+use crate::mqtt::{MQTTSender, create_mqtt_sender_from_config, wrap_mqtt_serial_log};
 use crate::ports::port_from_config;
 use clap::Parser;
 use color_eyre::eyre::eyre;
@@ -39,7 +39,12 @@ async fn main() -> color_eyre::Result<()> {
     let (port, rawlog_target) = wrap_raw_serial_log(port).await?;
     let mut p = SwitchExpect::new(port, None);
 
-    let mut job = ActiveJob::create(mqtt_sender, config.log_dir.clone(), tracing_target, rawlog_target);
+    let mut job = ActiveJob::create(
+        mqtt_sender,
+        config.log_dir.clone(),
+        tracing_target,
+        rawlog_target,
+    );
     job.reset().await?;
     job.send_update(JobUpdate::JobStatusUpdate(PortJobStatus::Idle))
         .await?;
