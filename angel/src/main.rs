@@ -1,0 +1,66 @@
+use crate::args::Cli;
+use crate::job::ActiveJob;
+use crate::logging::{setup_tracing, wrap_raw_serial_log, SerialLogger};
+use crate::mqtt::{create_mqtt_sender_from_config, wrap_mqtt_serial_log, MQTTSender};
+use crate::ports::port_from_config;
+use clap::Parser;
+use color_eyre::eyre::eyre;
+use cthulhu_angel_sm::AngelJob;
+use cthulhu_common::status::{JobCommand, JobUpdate, PortJobStatus};
+use cthulhu_config::angel::AngelConfig;
+use swexpect::SwitchExpect;
+use tokio::sync::mpsc;
+use tracing::info;
+
+mod args;
+mod job;
+mod logging;
+mod mqtt;
+mod ports;
+
+#[tokio::main]
+async fn main() -> color_eyre::Result<()> {
+    let cli = Cli::parse();
+    let config = AngelConfig::from_file(&cli.config).await?;
+    let tracing_target = setup_tracing(&config).await?;
+
+    info!("{config:?}");
+
+    let (tx, mut rx) = mpsc::channel(100);
+    let mqtt_sender = if let Some(hconfig) = config.heaven.as_ref() {
+        create_mqtt_sender_from_config(hconfig, tx).await?
+    } else {
+        MQTTSender::empty()
+    };
+
+    let port = port_from_config(&config.port).await?;
+    let port = SerialLogger::new(port);
+    let port = wrap_mqtt_serial_log(port, mqtt_sender.clone()).await?;
+    let (port, rawlog_target) = wrap_raw_serial_log(port).await?;
+    let mut p = SwitchExpect::new(port, None);
+
+    let mut job = ActiveJob::create(mqtt_sender, config.log_dir.clone(), tracing_target, rawlog_target);
+    job.reset().await?;
+    job.send_update(JobUpdate::JobStatusUpdate(PortJobStatus::Idle))
+        .await?;
+
+    loop {
+        tokio::select! {
+            msg = rx.recv() => {
+                if let Some(cmd) = msg {
+                    match cmd {
+                        JobCommand::ResetJob => {
+                            job.reset().await?;
+                            job.send_update(JobUpdate::JobStatusUpdate(PortJobStatus::Idle)).await?;
+                        }
+                    }
+                } else {
+                    return Err(eyre!("MQTT broken."));
+                }
+            },
+            r = job.step(&mut p) => {
+                r?;
+            },
+        }
+    }
+}

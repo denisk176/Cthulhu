@@ -1,0 +1,39 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <style>
+        .outer td {
+            border: 1px solid black;
+            padding: 3px 5px;
+        }
+        .inner td {
+            border: none;
+            padding: 1px;
+        }
+        a {
+            color: black;
+        }
+    </style>
+    <script>
+        async function abortJob(job) {
+            await fetch("/port/" + job + "/abort");
+        }
+
+        function createReloader(divId, page) {
+            async function reloadHeader() {
+                const response = await fetch(page);
+                const data = await response.text();
+                document.getElementById(divId).innerHTML = data;
+            }
+
+            setInterval(reloadHeader, 1000);
+        }
+
+        createReloader("portstatus", "portstatus.html");
+    </script>
+</head>
+<body id="portstatus">
+{% include "index-portstatus.html" %}
+</body>
+</html>

@@ -1,0 +1,6 @@
+[MQTT]
+host = "127.0.0.1"
+port = 1883
+
+[Web]
+listen_address = "127.0.0.1:4040"

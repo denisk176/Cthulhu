@@ -1,0 +1,9 @@
+log_dir = "/tmp/cthulhu/"
+
+[RawTCP]
+endpoint = "192.168.0.171:4001"
+
+[Heaven]
+id = "S1"
+host = "127.0.0.1"
+port = 1883

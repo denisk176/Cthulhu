@@ -1,0 +1,25 @@
+[package]
+name = "cthulhu-heaven"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+tokio = { version = "1.45.1", features = ["full"] }
+tracing = "0.1"
+tracing-subscriber = "0.3"
+rumqttc = "0.24.0"
+cthulhu-common = { path = "../common" }
+cthulhu-config = { path = "../config" }
+clap = { version = "4.5.40", features = ["derive"] }
+serde_json = "1.0.140"
+color-eyre = "0.6.5"
+chrono = "0.4.41"
+serde = { version = "1.0.219", features = ["derive"] }
+regex = "1.11.1"
+axum = { version = "0.8.4", features = ["ws"] }
+tera = "1.20.0"
+chrono-humanize = "0.2.3"
+include_dir = "0.7.4"
+tera-template-macro = "0.1.4"
+mime_guess = "2.0.5"
+tower-http = { version = "0.6.6", features = ["catch-panic"] }

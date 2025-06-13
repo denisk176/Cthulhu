@@ -1,0 +1,57 @@
+use std::path::{Path, PathBuf};
+use serde::Deserialize;
+use tracing::info;
+
+#[derive(Deserialize, Debug, Clone)]
+pub struct AngelConfig {
+    pub log_level: Option<String>,
+    pub log_dir: Option<PathBuf>,
+
+    #[serde(flatten)]
+    pub port: AngelPortConfig,
+    #[serde(rename = "Heaven")]
+    pub heaven: Option<AngelHeavenConfig>,
+}
+
+impl AngelConfig {
+    pub async fn from_file<P: AsRef<Path>>(p: P) -> color_eyre::Result<Self> {
+        info!("Using config file: {}", p.as_ref().display());
+        let d = tokio::fs::read_to_string(p).await?;
+        let d = toml::from_str(d.as_str())?;
+        Ok(d)
+    }
+}
+
+#[derive(Deserialize, Debug, Clone)]
+pub struct AngelHeavenConfig {
+    pub id: String,
+    pub host: String,
+    pub port: u16,
+}
+
+#[derive(Deserialize, Debug, Clone)]
+pub enum AngelPortConfig {
+    TTY(TTYConfig),
+    RawTCP(RawTCPConfig),
+}
+
+#[derive(Deserialize, Debug, Clone)]
+pub struct TTYConfig {
+    pub path: PathBuf,
+    #[serde(default)]
+    pub baudrate: TTYBaudrate,
+}
+
+#[derive(Deserialize, Debug, Clone, Copy, Ord, PartialOrd, PartialEq, Eq)]
+pub struct TTYBaudrate(pub u32);
+
+impl Default for TTYBaudrate {
+    fn default() -> Self {
+        Self(9600)
+    }
+}
+
+#[derive(Deserialize, Debug, Clone)]
+pub struct RawTCPConfig {
+    pub endpoint: String,
+}
