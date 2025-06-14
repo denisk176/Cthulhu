@@ -20,3 +20,21 @@ tokio-serial = { version = "5.4.5", features = ["libudev"] }
 clap = { version = "4.5.40", features = ["derive"] }
 serde_json = "1.0.140"
 cthulhu-angel-sm = { path = "../angel-sm" }
+
+[package.metadata.deb]
+maintainer = "Roelf Wichertjes <contact@roelf.org>"
+copyright = "2025, Roelf Wichertjes <contact@roelf.org>"
+license-file = ["../LICENSE", "4"]
+extended-description = """\
+A coordinator for switch wiping operations."""
+depends = "$auto"
+section = "utility"
+priority = "optional"
+assets = [
+    # target/release path is special, and gets replaced by cargo-deb with the actual target dir path.
+    ["target/release/cthulhu-angel", "usr/bin/", "755"],
+    # both array and object syntaxes are equivalent:
+    { source = "../angel.toml", dest = "/etc/cthulhu/angel/s1.toml.example", mode = "644"},
+]
+maintainer-scripts = "debian/"
+systemd-units = { unit-name = "cthulhu-angel", enable = false }

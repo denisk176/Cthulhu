@@ -23,3 +23,21 @@ include_dir = "0.7.4"
 tera-template-macro = "0.1.4"
 mime_guess = "2.0.5"
 tower-http = { version = "0.6.6", features = ["catch-panic"] }
+
+[package.metadata.deb]
+maintainer = "Roelf Wichertjes <contact@roelf.org>"
+copyright = "2025, Roelf Wichertjes <contact@roelf.org>"
+license-file = ["../LICENSE", "4"]
+extended-description = """\
+A coordinator for switch wiping operations."""
+depends = "$auto"
+section = "utility"
+priority = "optional"
+assets = [
+    # target/release path is special, and gets replaced by cargo-deb with the actual target dir path.
+    ["target/release/cthulhu-heaven", "usr/bin/", "755"],
+    # both array and object syntaxes are equivalent:
+    { source = "../heaven.toml", dest = "/etc/cthulhu/heaven.toml.example", mode = "644"},
+]
+maintainer-scripts = "debian/"
+systemd-units = { enable = false }
