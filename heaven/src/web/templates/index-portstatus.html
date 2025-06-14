@@ -9,7 +9,7 @@
     <tr>
         {% for j in range(start=0, end=total_columns, step=1) %}
         <td>
-            {% set port_n = (j * total_columns) + i %}
+            {% set port_n = (j * column_height) + i %}
             {% if port_n < max_ports %}
             {% set port = ports | nth(n=port_n) %}
             <table class="inner" style="background-color: {{port.status | csscolor}}">
