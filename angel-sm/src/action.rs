@@ -74,7 +74,7 @@ impl Action {
                 Ok(())
             }
             Action::Delay(d) => {
-                std::thread::sleep(*d);
+                tokio::time::sleep(*d).await;
                 Ok(())
             }
             Action::UpdatePortStatus(s) => {

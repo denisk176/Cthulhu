@@ -9,3 +9,4 @@ cthulhu-common = { path = "../common" }
 regex = "1.11.1"
 swexpect = { git = "https://github.com/rewbycraft/swexpect.git" }
 tracing = "0.1"
+tokio = "1.45.1"
