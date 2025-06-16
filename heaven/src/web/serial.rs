@@ -1,3 +1,4 @@
+use crate::manager::PortManagerEntry;
 use crate::mqtt::MQTTBroadcast;
 use crate::web::WebState;
 use axum::body::Bytes;
@@ -5,7 +6,6 @@ use axum::extract::ws::{Message, WebSocket};
 use axum::extract::{Path, State, WebSocketUpgrade};
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
-use crate::manager::PortManagerEntry;
 
 pub async fn serial_handler(
     State(state): State<WebState>,

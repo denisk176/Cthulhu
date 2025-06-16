@@ -59,10 +59,7 @@ pub async fn index_portstatus(State(state): State<WebState>) -> impl IntoRespons
     Html(context.render(&tera))
 }
 
-pub async fn logs_page(
-    State(state): State<WebState>,
-    Path(port_label): Path<String>,
-) -> Response {
+pub async fn logs_page(State(state): State<WebState>, Path(port_label): Path<String>) -> Response {
     let port = if let Some(v) = state.manager.get_port(&port_label).await {
         v
     } else {

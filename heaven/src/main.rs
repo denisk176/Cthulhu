@@ -8,7 +8,7 @@ use std::str::FromStr;
 use std::time::Duration;
 use tokio::task::JoinHandle;
 use tracing::level_filters::LevelFilter;
-use tracing::{Level, info, error, warn};
+use tracing::{Level, error, info, warn};
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::{Layer, Registry};
 
@@ -39,14 +39,26 @@ async fn main() -> color_eyre::Result<()> {
 
     let manager = JobManager::new().await?;
 
-    let a = yeller("web".to_string(), web::web_main(
-        config.clone(),
-        manager.clone(),
-        mqtt_sender,
-        mqtt_broadcast.clone(),
-    )).await;
-    let b = yeller("mqtt".to_string(), mqtt::mqtt_main(mqtt_broadcast.clone(), mqtt_client, mqtt_eventloop)).await;
-    let c = yeller("manager".to_string(), manager::manager_main(mqtt_broadcast, manager)).await;
+    let a = yeller(
+        "web".to_string(),
+        web::web_main(
+            config.clone(),
+            manager.clone(),
+            mqtt_sender,
+            mqtt_broadcast.clone(),
+        ),
+    )
+    .await;
+    let b = yeller(
+        "mqtt".to_string(),
+        mqtt::mqtt_main(mqtt_broadcast.clone(), mqtt_client, mqtt_eventloop),
+    )
+    .await;
+    let c = yeller(
+        "manager".to_string(),
+        manager::manager_main(mqtt_broadcast, manager),
+    )
+    .await;
 
     a.await??;
     b.await??;
@@ -55,7 +67,10 @@ async fn main() -> color_eyre::Result<()> {
     Ok(())
 }
 
-async fn yeller<T: Send + 'static, F: Future<Output=color_eyre::Result<T>> + Send + 'static>(label: String, f: F) -> JoinHandle<color_eyre::Result<T>> {
+async fn yeller<T: Send + 'static, F: Future<Output = color_eyre::Result<T>> + Send + 'static>(
+    label: String,
+    f: F,
+) -> JoinHandle<color_eyre::Result<T>> {
     tokio::spawn(async move {
         match f.await {
             Ok(v) => {

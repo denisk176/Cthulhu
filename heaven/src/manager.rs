@@ -6,8 +6,8 @@ use cthulhu_common::status::{JobUpdate, PortJobStatus};
 use serde::Serialize;
 use std::ops::Add;
 use std::sync::Arc;
-use tokio::sync::broadcast::error::RecvError;
 use tokio::sync::RwLock;
+use tokio::sync::broadcast::error::RecvError;
 use tracing::warn;
 
 #[derive(Default, Debug, Serialize, Clone)]
