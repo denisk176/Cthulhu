@@ -1,5 +1,4 @@
 use crate::devinfo::DeviceInformation;
-use crate::stages::ProcessStage;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
@@ -59,7 +58,7 @@ impl Display for PortJobStatus {
 }
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum JobUpdate {
-    JobStageTransition(ProcessStage, ProcessStage),
+    JobStageTransition(String, String),
     JobStatusUpdate(PortJobStatus),
     JobStart(DateTime<Utc>),
     JobNewInfoItem(DeviceInformation),

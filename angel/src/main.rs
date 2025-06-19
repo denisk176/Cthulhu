@@ -6,6 +6,7 @@ use crate::ports::port_from_config;
 use clap::Parser;
 use color_eyre::eyre::eyre;
 use cthulhu_angel_sm::AngelJob;
+use cthulhu_angel_sm::builder::StateMachineBuilder;
 use cthulhu_common::status::{JobCommand, JobUpdate, PortJobStatus};
 use cthulhu_config::angel::AngelConfig;
 use swexpect::SwitchExpect;
@@ -39,11 +40,19 @@ async fn main() -> color_eyre::Result<()> {
     let (port, rawlog_target) = wrap_raw_serial_log(port).await?;
     let mut p = SwitchExpect::new(port, None);
 
+    let mut smb = StateMachineBuilder::new();
+    smb.load_builtin_state_files()?;
+    for id in config.active_states.iter() {
+        smb.activate_state_file(id)?;
+    }
+    let sm = smb.build()?;
+
     let mut job = ActiveJob::create(
         mqtt_sender,
         config.log_dir.clone(),
         tracing_target,
         rawlog_target,
+        sm,
     );
     job.reset().await?;
     job.send_update(JobUpdate::JobStatusUpdate(PortJobStatus::Idle))

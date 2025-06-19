@@ -6,11 +6,21 @@ use tracing::info;
 pub struct AngelConfig {
     pub log_level: Option<String>,
     pub log_dir: Option<PathBuf>,
+    #[serde(default = "default_active_states")]
+    pub active_states: Vec<String>,
 
     #[serde(flatten)]
     pub port: AngelPortConfig,
     #[serde(rename = "Heaven")]
     pub heaven: Option<AngelHeavenConfig>,
+}
+
+fn default_active_states() -> Vec<String> {
+    vec![
+        "arista_wipe".to_string(),
+        "legacy_junos_wipe".to_string(),
+        "modern_junos_wipe".to_string(),
+    ]
 }
 
 impl AngelConfig {

@@ -2,8 +2,10 @@ use crate::AngelJob;
 use color_eyre::eyre::Context;
 use cthulhu_common::devinfo::DeviceInformation;
 use regex::RegexBuilder;
+use serde::Deserialize;
 use swexpect::SwitchExpect;
 
+#[derive(Deserialize, Clone, Debug, PartialOrd, PartialEq)]
 pub enum ProcessFunction {
     FixFS,
     CaptureJunosVersion,

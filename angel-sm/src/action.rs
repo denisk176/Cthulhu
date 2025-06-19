@@ -1,21 +1,58 @@
 use crate::AngelJob;
 use crate::pfunc::ProcessFunction;
+use crate::util::{vec_or_single, deser_duration};
 use cthulhu_common::devinfo::{DeviceInformation, DeviceInformationType};
 use cthulhu_common::status::{JobUpdate, PortJobStatus};
+use serde::Deserialize;
 use std::time::Duration;
 use swexpect::SwitchExpect;
 use tracing::info;
 
+#[derive(Deserialize, Clone, Debug, PartialOrd, PartialEq)]
+#[serde(untagged)]
+pub enum DeviceInfoArg {
+    WithArgument(DeviceInformation),
+    WithoutArgument { flag: DeviceInformation },
+}
+
+impl From<DeviceInfoArg> for DeviceInformation {
+    fn from(value: DeviceInfoArg) -> Self {
+        match value {
+            DeviceInfoArg::WithArgument(e) => e,
+            DeviceInfoArg::WithoutArgument { flag: e } => e,
+        }
+    }
+}
+
+#[derive(Deserialize, Clone, Debug, PartialOrd, PartialEq)]
+#[serde(tag = "type")]
 pub enum Action {
-    Send(String),
+    Send {
+        text: String,
+    },
     Flush,
-    SendLine(String),
-    SendControl(char),
-    Function(ProcessFunction),
-    Repeat(Vec<Action>, usize),
-    Delay(Duration),
-    UpdatePortStatus(PortJobStatus),
-    AddDeviceInfo(DeviceInformation),
+    SendLine {
+        line: String,
+    },
+    SendControl {
+        char: char,
+    },
+    Function {
+        func: ProcessFunction,
+    },
+    Repeat {
+        #[serde(deserialize_with = "vec_or_single", rename = "action")]
+        actions: Vec<Action>,
+        times: usize,
+    },
+    Delay {
+        #[serde(deserialize_with = "deser_duration")]
+        duration: Duration,
+    },
+    UpdatePortStatus {
+        status: PortJobStatus,
+    },
+    AddDeviceInfo(DeviceInfoArg),
     FinishJob,
     SetupJob,
 }
@@ -29,7 +66,7 @@ impl Action {
         mat: &str,
     ) -> color_eyre::Result<()> {
         match self {
-            Action::Send(s) => {
+            Action::Send { text: s } => {
                 p.send(s).await?;
                 Ok(())
             }
@@ -37,15 +74,15 @@ impl Action {
                 p.flush().await?;
                 Ok(())
             }
-            Action::SendLine(s) => {
+            Action::SendLine { line: s } => {
                 p.send_line(s).await?;
                 Ok(())
             }
-            Action::SendControl(c) => {
+            Action::SendControl { char: c } => {
                 p.send_control(*c).await?;
                 Ok(())
             }
-            Action::Function(pf) => pf.execute(job, p, data, mat).await,
+            Action::Function { func: pf } => pf.execute(job, p, data, mat).await,
             Action::FinishJob => {
                 info!("Job finished!");
                 info!("Information items:");
@@ -65,7 +102,10 @@ impl Action {
                 //job.reset().await?;
                 Ok(())
             }
-            Action::Repeat(a, t) => {
+            Action::Repeat {
+                actions: a,
+                times: t,
+            } => {
                 for _ in 0..*t {
                     for b in a.iter() {
                         Box::pin(b.perform(job, p, data, mat)).await?;
@@ -73,16 +113,16 @@ impl Action {
                 }
                 Ok(())
             }
-            Action::Delay(d) => {
+            Action::Delay { duration: d } => {
                 tokio::time::sleep(*d).await;
                 Ok(())
             }
-            Action::UpdatePortStatus(s) => {
+            Action::UpdatePortStatus { status: s } => {
                 job.send_update(JobUpdate::JobStatusUpdate(*s)).await?;
                 Ok(())
             }
             Action::AddDeviceInfo(i) => {
-                job.add_information(i.clone()).await?;
+                job.add_information(i.clone().into()).await?;
                 Ok(())
             }
             Action::SetupJob => {

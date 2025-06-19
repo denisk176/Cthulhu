@@ -1,7 +1,6 @@
 use crate::mqtt::{BroadcastSender, MQTTBroadcast};
 use chrono::{DateTime, TimeDelta, Utc};
 use cthulhu_common::devinfo::DeviceInformation;
-use cthulhu_common::stages::ProcessStage;
 use cthulhu_common::status::{JobUpdate, PortJobStatus};
 use serde::Serialize;
 use std::ops::Add;
@@ -15,7 +14,7 @@ pub struct PortManagerEntry {
     pub label: String,
     pub last_update: DateTime<Utc>,
     pub job_started: DateTime<Utc>,
-    pub current_stage: ProcessStage,
+    pub current_stage: String,
     pub status: PortJobStatus,
     pub info_items: Vec<DeviceInformation>,
     pub log_buffer: Vec<u8>,

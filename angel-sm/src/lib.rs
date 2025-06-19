@@ -2,9 +2,16 @@ use cthulhu_common::devinfo::{DeviceInformation, DeviceInformationType};
 use cthulhu_common::status::JobUpdate;
 
 pub mod action;
+pub mod builder;
+pub mod data_structure;
 pub mod pfunc;
-pub mod process;
 pub mod state;
+pub mod trigger;
+
+mod util;
+
+//pub mod process;
+//pub mod state;
 
 //TODO: Figure out how to properly fix the warning.
 #[allow(async_fn_in_trait)]

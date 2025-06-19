@@ -3,10 +3,9 @@ use crate::mqtt::MQTTSender;
 use chrono::{DateTime, Utc};
 use color_eyre::eyre::Context;
 use cthulhu_angel_sm::AngelJob;
-use cthulhu_angel_sm::process::ProcessStageTransition;
-use cthulhu_angel_sm::state::{StateCondition, StateTransition};
+use cthulhu_angel_sm::data_structure::{State, StateMachineTransition, StateMachineTrigger};
+use cthulhu_angel_sm::state::StateMachine;
 use cthulhu_common::devinfo::{DeviceInformation, DeviceInformationType};
-use cthulhu_common::stages::ProcessStage;
 use cthulhu_common::status::JobUpdate;
 use std::path::PathBuf;
 use swexpect::SwitchExpect;
@@ -14,9 +13,10 @@ use swexpect::hay::ReadUntil;
 use tracing::{debug, info};
 
 pub struct ActiveJob {
+    state_machine: StateMachine,
+    current_state: State,
     information: Vec<DeviceInformation>,
     job_started: DateTime<Utc>,
-    pub stage: ProcessStage,
     pub mqtt: MQTTSender,
     tracing_target: TracingTarget,
     rawlog_target: TracingTarget,
@@ -56,23 +56,28 @@ impl AngelJob for ActiveJob {
 
     async fn reset(&mut self) -> color_eyre::Result<()> {
         info!("Resetting job...");
-        let old_stage = self.stage;
-        self.stage = ProcessStage::default();
+        let old_stage = self.current_state.clone();
+        self.current_state = "Init".to_string();
         self.information = Vec::new();
         self.job_started = Utc::now();
         self.send_update(JobUpdate::JobStart(self.job_started.clone()))
             .await?;
-        self.send_update(JobUpdate::JobStageTransition(old_stage, self.stage))
-            .await?;
+        self.send_update(JobUpdate::JobStageTransition(
+            old_stage,
+            self.current_state.clone(),
+        ))
+        .await?;
         Ok(())
     }
 
     async fn add_information(&mut self, information: DeviceInformation) -> color_eyre::Result<()> {
-        info!("Recorded new switch information: {information:?}");
-        self.information.push(information.clone());
-        self.mqtt
-            .send_update(JobUpdate::JobNewInfoItem(information))
-            .await?;
+        if !self.information.contains(&information) {
+            info!("Recorded new switch information: {information:?}");
+            self.information.push(information.clone());
+            self.mqtt
+                .send_update(JobUpdate::JobNewInfoItem(information))
+                .await?;
+        }
         Ok(())
     }
 
@@ -91,30 +96,35 @@ impl ActiveJob {
         log_dir: Option<PathBuf>,
         tracing_target: TracingTarget,
         rawlog_target: TracingTarget,
+        state_machine: StateMachine,
     ) -> Self {
         Self {
-            stage: ProcessStage::default(),
+            current_state: "Init".to_string(),
             mqtt,
             information: Vec::new(),
             job_started: Utc::now(),
             log_dir,
             tracing_target,
             rawlog_target,
+            state_machine,
         }
     }
 
-    pub async fn transition(
+    async fn transition(
         &mut self,
-        t: &StateTransition,
+        t: &StateMachineTransition,
         p: &mut SwitchExpect,
         d: &str,
         m: &str,
     ) -> color_eyre::Result<()> {
-        let old_state = self.stage.clone();
-        self.stage = t.target_state;
-        info!("State transition: {:?} -> {:?}", old_state, t.target_state);
+        // Validate that the state exists
+        let _ = self.state_machine.state(&t.target)?;
+
+        let old_state = self.current_state.clone();
+        self.current_state = t.target.clone();
+        info!("State transition: {:?} -> {:?}", old_state, t.target);
         self.mqtt
-            .send_update(JobUpdate::JobStageTransition(old_state, t.target_state))
+            .send_update(JobUpdate::JobStageTransition(old_state, t.target.clone()))
             .await?;
         for action in &t.actions {
             action.perform(self, p, d, m).await?;
@@ -123,11 +133,12 @@ impl ActiveJob {
     }
 
     pub async fn step(&mut self, p: &mut SwitchExpect) -> color_eyre::Result<()> {
-        let transitions = self.stage.get_transitions()?;
+        let s = self.state_machine.state(&self.current_state)?;
+        let transitions = &s.transitions;
 
         if let Some(t) = transitions
             .iter()
-            .find(|t| t.condition == StateCondition::Immediate)
+            .find(|t| t.trigger == StateMachineTrigger::Immediate)
         {
             self.transition(t, p, "", "")
                 .await
@@ -136,7 +147,7 @@ impl ActiveJob {
             let u = ReadUntil::Any(
                 transitions
                     .iter()
-                    .map(|t| t.condition.to_needle().map(|v| v.unwrap()))
+                    .map(|t| t.trigger.to_needle().map(|v| v.unwrap()))
                     .collect::<color_eyre::Result<Vec<_>>>()?,
             );
 
@@ -146,8 +157,8 @@ impl ActiveJob {
                 .expect(&u)
                 .await
                 .context("failed to read from serial port")?;
-            't_test: for t in &transitions {
-                if t.condition.matches_result(&m)? {
+            't_test: for t in transitions.iter() {
+                if t.trigger.matches_result(&m)? {
                     self.transition(&t, p, &d, &m)
                         .await
                         .context("process serial transition")?;

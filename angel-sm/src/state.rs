@@ -1,38 +1,108 @@
 use crate::action::Action;
-use cthulhu_common::stages::ProcessStage;
-use regex::Regex;
-use swexpect::hay::ReadUntil;
+use crate::data_structure::{
+    StateMachineMergeMode, StateMachineState, StateMachineTransition, StateMachineTrigger, StateMap,
+};
+use color_eyre::eyre::eyre;
 
-#[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq)]
-pub enum StateCondition {
-    WaitForString(String),
-    WaitForRegex(String),
-    Immediate,
+#[derive(Debug)]
+pub struct StateMachine {
+    pub(crate) states: StateMap,
 }
 
-impl StateCondition {
-    pub fn to_needle(&self) -> color_eyre::Result<Option<ReadUntil>> {
-        match self {
-            StateCondition::WaitForString(s) => Ok(Some(ReadUntil::String(s.clone()))),
-            StateCondition::WaitForRegex(s) => Ok(Some(ReadUntil::Regex(Regex::new(s)?))),
-            StateCondition::Immediate => Ok(None),
-        }
-    }
+impl Default for StateMachine {
+    fn default() -> Self {
+        let mut s = Self {
+            states: StateMap::new(),
+        };
 
-    pub fn matches_result(&self, m: &str) -> color_eyre::Result<bool> {
-        match self {
-            StateCondition::WaitForString(s) => Ok(m == s),
-            StateCondition::WaitForRegex(s) => {
-                let r = Regex::new(s)?;
-                Ok(r.is_match(m))
+        s.states.insert(
+            "Init".to_string(),
+            StateMachineState {
+                merge: Default::default(),
+                transitions: vec![StateMachineTransition {
+                    target: "SwitchDetect".to_string(),
+                    trigger: StateMachineTrigger::Immediate,
+                    actions: vec![Action::SetupJob],
+                }],
+            },
+        );
+
+        s.states.insert(
+            "SwitchDetect".to_string(),
+            StateMachineState {
+                merge: Default::default(),
+                transitions: vec![StateMachineTransition {
+                    target: "SwitchDetect".to_string(),
+                    trigger: StateMachineTrigger::String {
+                        string: "A non-empty Data Buffering File was found.".to_string(),
+                    },
+                    actions: vec![Action::SendLine {
+                        line: "E".to_string(),
+                    }],
+                }],
+            },
+        );
+
+        s.states.insert(
+            "EndJob".to_string(),
+            StateMachineState {
+                merge: Default::default(),
+                transitions: vec![StateMachineTransition {
+                    target: "JobFinished".to_string(),
+                    trigger: StateMachineTrigger::Immediate,
+                    actions: vec![Action::FinishJob],
+                }],
+            },
+        );
+
+        s.states.insert(
+            "JobFinished".to_string(),
+            StateMachineState {
+                merge: Default::default(),
+                transitions: vec![StateMachineTransition {
+                    target: "JobFinished".to_string(),
+                    trigger: StateMachineTrigger::String {
+                        string: "AAAAAAAAAAAAAAAAAAAAAAAAAAA".to_string(),
+                    },
+                    actions: vec![],
+                }],
+            },
+        );
+
+        s
+    }
+}
+
+impl StateMachine {
+    pub fn merge_states(&mut self, states: StateMap) {
+        for (key, value) in states {
+            if let Some(v) = self.states.get_mut(&key) {
+                match value.merge {
+                    StateMachineMergeMode::Replace => {
+                        *v = value;
+                    }
+                    StateMachineMergeMode::Append => {
+                        v.transitions.extend(value.transitions);
+                    }
+                }
+            } else {
+                self.states.insert(key, value);
             }
-            StateCondition::Immediate => Ok(true),
         }
     }
-}
+    
+    pub fn states(&self) -> Vec<String> {
+        self.states.keys().cloned().collect::<Vec<String>>()
+    }
 
-pub struct StateTransition {
-    pub target_state: ProcessStage,
-    pub actions: Vec<Action>,
-    pub condition: StateCondition,
+    pub fn get_state(&self, key: &str) -> Option<StateMachineState> {
+        self.states.get(key).cloned()
+    }
+
+    pub fn state(&self, key: &str) -> color_eyre::Result<StateMachineState> {
+        self.states
+            .get(key)
+            .cloned()
+            .ok_or_else(|| eyre!("unknown state: {}", key))
+    }
 }
