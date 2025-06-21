@@ -40,6 +40,17 @@ impl StateMachineBuilder {
         false
     }
 
+    pub fn loaded_state_file_ids(&self) -> Vec<String> {
+        self.loaded_state_files.iter().map(|v| v.id.clone()).collect()
+    }
+
+    pub fn active_all_state_files(&mut self) -> color_eyre::Result<()> {
+        for i in self.loaded_state_file_ids() {
+            self.activate_state_file(&i)?
+        }
+        Ok(())
+    }
+
     pub fn activate_state_file(&mut self, id: &str) -> color_eyre::Result<()> {
         if self.is_state_file_active(id) {
             return Ok(());

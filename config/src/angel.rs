@@ -16,11 +16,7 @@ pub struct AngelConfig {
 }
 
 fn default_active_states() -> Vec<String> {
-    vec![
-        "arista_wipe".to_string(),
-        "legacy_junos_wipe".to_string(),
-        "modern_junos_wipe".to_string(),
-    ]
+    vec!["wipe".to_string()]
 }
 
 impl AngelConfig {

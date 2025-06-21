@@ -10,9 +10,6 @@ pub mod trigger;
 
 mod util;
 
-//pub mod process;
-//pub mod state;
-
 //TODO: Figure out how to properly fix the warning.
 #[allow(async_fn_in_trait)]
 pub trait AngelJob {
@@ -23,3 +20,8 @@ pub trait AngelJob {
     fn get_information(&self) -> &[DeviceInformation];
     fn get_max_information_type(&self) -> Option<DeviceInformationType>;
 }
+
+
+
+#[cfg(test)]
+mod tests;

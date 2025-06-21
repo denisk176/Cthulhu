@@ -11,7 +11,7 @@ pub struct StateMachineFile {
     pub id: String,
     #[serde(default)]
     pub depends: Vec<String>,
-    #[serde(rename = "state")]
+    #[serde(rename = "state", default)]
     pub states: StateMap,
 }
 
