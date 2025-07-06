@@ -42,17 +42,35 @@ state "AristaWipeStartupConfig" {
     }
     action {
       type = "SendLine"
-      line = "rm -r /mnt/flash/.persist /mnt/flash/startup-config"
+      line = "rm -rv /mnt/flash/.persist /mnt/flash/persist /mnt/flash/*.sh /mnt/flash/autoreload* /mnt/flash/artnet* /mnt/flash/startup-config /mnt/flash/*.log /mnt/flash/zerotouch-config"
     }
   }
 }
 
 state "AristaRebootAfterStartupConfigWipe" {
   transition {
-    target = "AristaWaitForReboot"
+    target = "AristaBootloaderHook"
     trigger {
       type = "string"
       string = "Aboot#"
+    }
+  }
+}
+
+state "AristaBootloaderHook" {
+  transition {
+    target = "AristaBootloaderExit"
+    trigger {
+      type = "immediate"
+    }
+  }
+}
+
+state "AristaBootloaderExit" {
+  transition {
+    target = "AristaWaitForReboot"
+    trigger {
+      type = "immediate"
     }
     action {
       type = "SendLine"

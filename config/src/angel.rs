@@ -1,3 +1,4 @@
+use std::collections::BTreeMap;
 use serde::Deserialize;
 use std::path::{Path, PathBuf};
 use tracing::info;
@@ -8,6 +9,9 @@ pub struct AngelConfig {
     pub log_dir: Option<PathBuf>,
     #[serde(default = "default_active_states")]
     pub active_states: Vec<String>,
+
+    #[serde(rename = "JobConfig")]
+    pub job_config: BTreeMap<String, String>,
 
     #[serde(flatten)]
     pub port: AngelPortConfig,

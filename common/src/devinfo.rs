@@ -17,6 +17,8 @@ pub enum DeviceInformation {
     AlternateImage,
     StrangeCLIPrompt,
     OSCorruption,
+    ProvisioningFailed,
+    ProvisioningSuccess,
 }
 
 impl DeviceInformation {
@@ -37,6 +39,8 @@ impl DeviceInformation {
             DeviceInformation::AlternateImage => DeviceInformationType::Warning,
             DeviceInformation::StrangeCLIPrompt => DeviceInformationType::Warning,
             DeviceInformation::OSCorruption => DeviceInformationType::Error,
+            DeviceInformation::ProvisioningFailed => DeviceInformationType::Error,
+            DeviceInformation::ProvisioningSuccess => DeviceInformationType::Info,
         }
     }
 }

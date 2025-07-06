@@ -1,3 +1,4 @@
+use std::collections::BTreeMap;
 use crate::logging::TracingTarget;
 use crate::mqtt::MQTTSender;
 use chrono::{DateTime, Utc};
@@ -21,6 +22,7 @@ pub struct ActiveJob {
     tracing_target: TracingTarget,
     rawlog_target: TracingTarget,
     log_dir: Option<PathBuf>,
+    job_config: BTreeMap<String, String>,
 }
 
 impl AngelJob for ActiveJob {
@@ -88,6 +90,10 @@ impl AngelJob for ActiveJob {
     fn get_max_information_type(&self) -> Option<DeviceInformationType> {
         self.information.iter().map(|i| i.get_type()).max()
     }
+
+    async fn get_job_config_key(&self, key: &str) -> Option<String> {
+        self.job_config.get(key).cloned()
+    }
 }
 
 impl ActiveJob {
@@ -97,6 +103,7 @@ impl ActiveJob {
         tracing_target: TracingTarget,
         rawlog_target: TracingTarget,
         state_machine: StateMachine,
+        job_config: BTreeMap<String, String>,
     ) -> Self {
         Self {
             current_state: "Init".to_string(),
@@ -107,6 +114,7 @@ impl ActiveJob {
             tracing_target,
             rawlog_target,
             state_machine,
+            job_config,
         }
     }
 

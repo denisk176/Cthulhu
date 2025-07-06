@@ -1,6 +1,6 @@
 use crate::data_structure::StateMachineFile;
 use crate::state::StateMachine;
-use color_eyre::eyre::eyre;
+use color_eyre::eyre::{eyre, WrapErr};
 use include_dir::{Dir, include_dir};
 use tracing::info;
 
@@ -26,7 +26,7 @@ impl StateMachineBuilder {
 
     pub fn load_builtin_state_files(&mut self) -> color_eyre::Result<()> {
         for file in STATES_DIR.files() {
-            self.load_state_file(hcl::from_slice(file.contents())?);
+            self.load_state_file(hcl::from_slice(file.contents()).wrap_err_with(|| format!("error while parsing file {:?}", file.path()))?);
         }
         Ok(())
     }

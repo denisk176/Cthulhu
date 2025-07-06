@@ -19,9 +19,19 @@ pub trait AngelJob {
     async fn add_information(&mut self, information: DeviceInformation) -> color_eyre::Result<()>;
     fn get_information(&self) -> &[DeviceInformation];
     fn get_max_information_type(&self) -> Option<DeviceInformationType>;
+
+    async fn get_job_config_key(&self, key: &str) -> Option<String>;
+
+    fn has_information(&self, target_info: &DeviceInformation) -> bool {
+        let infos = self.get_information();
+        for info in infos {
+            if info == target_info {
+                return true;
+            }
+        }
+        false
+    }
 }
-
-
 
 #[cfg(test)]
 mod tests;

@@ -12,3 +12,6 @@ default-members = [
     "angel",
     "heaven",
 ]
+
+[profile.release]
+debug = true

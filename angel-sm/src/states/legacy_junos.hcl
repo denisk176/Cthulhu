@@ -21,6 +21,21 @@ state "SwitchDetect" {
       Vendor = "Juniper"
     }
   }
+  transition {
+    target = "LegacyJunosUBoot1"
+    trigger {
+      type   = "string"
+      string = "U-Boot 2010.03"
+    }
+    action {
+      type   = "UpdatePortStatus"
+      status = "Busy"
+    }
+    action {
+      type   = "AddDeviceInfo"
+      Vendor = "Juniper"
+    }
+  }
 }
 
 state "LegacyJunosUBoot1" {

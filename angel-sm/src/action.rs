@@ -6,7 +6,7 @@ use cthulhu_common::status::{JobUpdate, PortJobStatus};
 use serde::Deserialize;
 use std::time::Duration;
 use swexpect::SwitchExpect;
-use tracing::info;
+use tracing::{info, warn};
 
 #[derive(Deserialize, Clone, Debug, PartialOrd, PartialEq)]
 #[serde(untagged)]
@@ -55,6 +55,9 @@ pub enum Action {
     AddDeviceInfo(DeviceInfoArg),
     FinishJob,
     SetupJob,
+    SendConfigValue {
+        key: String,
+    },
 }
 
 impl Action {
@@ -127,6 +130,14 @@ impl Action {
             }
             Action::SetupJob => {
                 job.init_job().await?;
+                Ok(())
+            }
+            Action::SendConfigValue { key } => {
+                if let Some(v) = job.get_job_config_key(key).await {
+                    p.send(&v).await?;
+                } else {
+                    warn!("No such config item: {key}");
+                }
                 Ok(())
             }
         }

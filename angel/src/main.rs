@@ -53,6 +53,7 @@ async fn main() -> color_eyre::Result<()> {
         tracing_target,
         rawlog_target,
         sm,
+        config.job_config.clone(),
     );
     job.reset().await?;
     job.send_update(JobUpdate::JobStatusUpdate(PortJobStatus::Idle))

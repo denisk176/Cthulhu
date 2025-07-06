@@ -6,6 +6,7 @@ use cthulhu_config::heaven::{HeavenConfig, HeavenMQTTConfig};
 use rumqttc::MqttOptions;
 use std::str::FromStr;
 use std::time::Duration;
+use tokio::select;
 use tokio::task::JoinHandle;
 use tracing::level_filters::LevelFilter;
 use tracing::{Level, error, info, warn};
@@ -60,9 +61,20 @@ async fn main() -> color_eyre::Result<()> {
     )
     .await;
 
-    a.await??;
-    b.await??;
-    c.await??;
+    select! {
+        a = a => {
+            tokio::time::sleep(Duration::from_secs(1)).await;
+            a??;
+        }
+        b = b => {
+            tokio::time::sleep(Duration::from_secs(1)).await;
+            b??;
+        }
+        c = c => {
+            tokio::time::sleep(Duration::from_secs(1)).await;
+            c??;
+        }
+    }
 
     Ok(())
 }
