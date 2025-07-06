@@ -10,7 +10,7 @@ pub struct AngelConfig {
     #[serde(default = "default_active_states")]
     pub active_states: Vec<String>,
 
-    #[serde(rename = "JobConfig")]
+    #[serde(rename = "JobConfig", default)]
     pub job_config: BTreeMap<String, String>,
 
     #[serde(flatten)]
