@@ -4,7 +4,6 @@ depends = [
   "arista_wipe"
 ]
 
-
 state "AristaBootloaderHook" {
   transition {
     target = "AristaBootloaderHookExit"

@@ -293,4 +293,15 @@ state "LegacyJunosAwaitZeroizeFinish" {
       flag = "UnableToLoadAKernel"
     }
   }
+  transition {
+    target = "LegacyJunosAwaitZeroizeFinish"
+    trigger {
+      type   = "string"
+      string = "can't load '/kernel'"
+    }
+    action {
+      type = "AddDeviceInfo"
+      flag = "UnableToLoadAKernel"
+    }
+  }
 }

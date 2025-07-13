@@ -2,26 +2,14 @@ id = "common_junos_wipe"
 
 state "JunosLogin" {
   transition {
-    target = "JunosHappyCli"
+    target = "JunosEnterHappyCli"
     trigger {
       type   = "string"
       string = "root@:RE:0%"
     }
-    action {
-      type = "SendLine"
-      line = "echo \"y\" | crontab -r"
-    }
-    action {
-      type = "SendLine"
-      line = "rm -rfv /var/tmp/autoreload.* /tmp/autoreload.* /var/core/core.* /var/log/* /var/tmp/*"
-    }
-    action {
-      type = "SendLine"
-      line = "cli"
-    }
   }
   transition {
-    target = "JunosHappyCli"
+    target = "JunosEnterHappyCli"
     trigger {
       type   = "string"
       string = "root@:LC:0%"
@@ -30,22 +18,9 @@ state "JunosLogin" {
       type = "AddDeviceInfo"
       flag = "StrangeCLIPrompt"
     }
-    action {
-      type = "SendLine"
-      line = "echo \"y\" | crontab -r"
-    }
-    action {
-      type = "SendLine"
-      line = "rm -rfv /var/tmp/autoreload.* /tmp/autoreload.* /var/core/core.* /var/log/* /var/tmp/*"
-    }
-    action {
-      type = "SendLine"
-      line = "cli"
-    }
   }
-
   transition {
-    target = "JunosHappyCli"
+    target = "JunosEnterHappyCli"
     trigger {
       type  = "regex"
       regex = "root@[A-Za-z0-9\\-]+:RE:0%"
@@ -54,21 +29,9 @@ state "JunosLogin" {
       type = "AddDeviceInfo"
       flag = "KeptHostname"
     }
-    action {
-      type = "SendLine"
-      line = "echo \"y\" | crontab -r"
-    }
-    action {
-      type = "SendLine"
-      line = "rm -rfv /var/tmp/autoreload.* /tmp/autoreload.* /var/core/core.* /var/log/* /var/tmp/*"
-    }
-    action {
-      type = "SendLine"
-      line = "cli"
-    }
   }
   transition {
-    target = "JunosHappyCli"
+    target = "JunosEnterHappyCli"
     trigger {
       type  = "regex"
       regex = "root@[A-Za-z0-9\\-]+:LC:0%"
@@ -81,24 +44,25 @@ state "JunosLogin" {
       type = "AddDeviceInfo"
       flag = "StrangeCLIPrompt"
     }
-    action {
-      type = "SendLine"
-      line = "echo \"y\" | crontab -r"
-    }
-    action {
-      type = "SendLine"
-      line = "rm -rfv /var/tmp/autoreload.* /tmp/autoreload.* /var/core/core.* /var/log/* /var/tmp/*"
-    }
-    action {
-      type = "SendLine"
-      line = "cli"
-    }
   }
+  # transition {
+  #   target = "JunosBackupImageCli1"
+  #   trigger {
+  #     type   = "string"
+  #     string = "Please re-install JUNOS"
+  #   }
+  #   action {
+  #     type = "SendLine"
+  #     line = "cli"
+  #   }
+  # }
+}
+
+state "JunosEnterHappyCli" {
   transition {
-    target = "JunosBackupImageCli1"
+    target = "JunosHappyCli"
     trigger {
-      type   = "string"
-      string = "Please re-install JUNOS"
+      type   = "immediate"
     }
     action {
       type = "SendLine"
@@ -106,13 +70,18 @@ state "JunosLogin" {
     }
     action {
       type = "SendLine"
-      line = "rm -rfv /var/tmp/autoreload.* /tmp/autoreload.* /var/core/core.* /var/log/* /var/tmp/*"
+      line = "rm -rfv /var/tmp/autoreload.* /tmp/provision.* /tmp/autoreload.* /var/core/core.* /var/log/* /var/tmp/*"
     }
     action {
       type = "SendLine"
-      line = "cli"
+      line = "sysctl hw.product.model ; sysctl hw.chassis.serialid"
+    }
+    action {
+      type = "SendLine"
+      line = "sleep 30; cli"
     }
   }
+
 }
 
 state "JunosHappyCli" {
@@ -280,6 +249,7 @@ state "JunosChassisOutput" {
       type  = "regex"
       regex = "root(@[A-Za-z0-9\\-]+)?>"
     }
+    # TODO: Maybe switch to sysctl hw.product.model ; sysctl hw.chassis.serialid
     action {
       type = "Function"
       func = "CaptureChassisOutput"
