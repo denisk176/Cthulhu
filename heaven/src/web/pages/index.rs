@@ -23,7 +23,7 @@ pub async fn port_status(State(state): State<WebState>) -> Markup {
     let mut ports = state.manager.get_ports().await;
     ports.sort_by(|a, b| a.data.label.cmp(&b.data.label));
 
-    let column_height = 16usize.min(ports.len());
+    let column_height = 8usize.min(ports.len());
     let total_columns = ((ports.len() as f64) / (column_height as f64)).ceil() as usize;
 
     html! {

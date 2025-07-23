@@ -2,6 +2,7 @@ async function abortJob(job) {
     await fetch("/port/" + job + "/abort");
 }
 
+var reloaders = [];
 function createReloader(divId, page) {
     async function reloadHeader() {
         const response = await fetch(page);
@@ -9,7 +10,15 @@ function createReloader(divId, page) {
         document.getElementById(divId).innerHTML = data;
     }
 
-    setInterval(reloadHeader, 1000);
+    reloaders.push(setInterval(reloadHeader, 1000));
 }
 
 createReloader("portstatus", "portstatus.html");
+
+function stopReloaders() {
+    for (const r of reloaders) {
+        console.log("Stopping reloader: " + r);
+        clearInterval(r);
+    }
+    reloaders = [];
+}
