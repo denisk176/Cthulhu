@@ -9,10 +9,16 @@ html {
     border: 1px solid var(--primary-color);
     padding: 3px 5px;
 }
+
+.inner {
+    width: 100%;
+}
+
 .inner td {
     border: none;
     padding: 1px;
 }
+
 a {
     color: var(--primary-color);
 }

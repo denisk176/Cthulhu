@@ -23,8 +23,12 @@ state "AristaWaitForBootloader" {
       string = "Press Control-C now to enter Aboot shell"
     }
     action {
-      type = "SendControl"
-      char = "c"
+      type = "Repeat"
+      times = 10
+      action {
+        type = "SendControl"
+        char = "c"
+      }
     }
   }
 }

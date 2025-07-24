@@ -1,0 +1,18 @@
+[package]
+name = "cthulhu-netbox"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+clap = { version = "4.5.41", features = ["derive"] }
+color-eyre = "0.6.5"
+rumqttc = "0.24.0"
+tokio = { version = "1.46.1", features = ["full"] }
+tracing = "0.1.41"
+tracing-subscriber = "0.3.19"
+cthulhu-config = { path = "../config" }
+cthulhu-common = { path = "../common" }
+serde_json = "1.0.141"
+reqwest = { version = "0.12.22", features = ["json", "rustls-tls-webpki-roots", "http2"], default-features = false }
+serde = { version = "1.0.219", features = ["derive"] }
+regex = "1.11.1"

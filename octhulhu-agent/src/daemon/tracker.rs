@@ -129,8 +129,16 @@ impl PortTrackerEntry {
         v: bool,
         _mqtt: AsyncClient,
     ) -> color_eyre::Result<()> {
+        let old = self.module_present;
         self.module_present = Some(v);
         debug!("Module presence update for {}: {}", self.data.label, v);
+        if !old.unwrap_or(false) && self.module_present.unwrap_or(false) {
+            info!("Module {} is plugged in!", self.data.label);
+        }
+        if old.unwrap_or(false) && !self.module_present.unwrap_or(false) {
+            info!("Module {} is unplugged!", self.data.label);
+        }
+
         self.update_led_color().await?;
         Ok(())
     }
@@ -144,8 +152,14 @@ impl PortTrackerEntry {
         self.switch_present = Some(v);
         debug!("Switch presence update for {}: {}", self.data.label, v);
         self.update_led_color().await?;
-        if old.is_some() {
-            if v && !old.unwrap() && self.module_present.unwrap_or(false) {
+        if !old.unwrap_or(false) && self.switch_present.unwrap_or(false) {
+            info!("Switch {} is plugged in!", self.data.label);
+        }
+        if old.unwrap_or(false) && !self.switch_present.unwrap_or(false) {
+            info!("Switch {} is unplugged!", self.data.label);
+        }
+        if old.is_some() && self.module_present.unwrap_or(false) {
+            if v && !old.unwrap()  {
                 info!("Resetting job for {}...", self.data.label);
                 let cmd = JobCommand::ResetJob;
                 let v = serde_json::to_string(&cmd)?;
