@@ -80,9 +80,12 @@ async fn update_device(
     data: &JobData,
 ) -> color_eyre::Result<()> {
     let device_id = nb_client.get_device_id_by_serial(&sn).await?;
-    nb_client
-        .set_device_status(device_id, &nb_config.target_status)
-        .await?;
+
+    if data.get_max_information_type() != DeviceInformationType::Error {
+        nb_client
+            .set_device_status(device_id, &nb_config.target_status)
+            .await?;
+    }
 
     let mut comment = String::new();
     comment.push_str("# Cthulhu report\n");
