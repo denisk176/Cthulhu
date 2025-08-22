@@ -58,7 +58,7 @@ state "AristaWipeStartupConfig" {
     }
     action {
       type = "SendLine"
-      line = "rm -rv /mnt/flash/.persist /mnt/flash/persist /mnt/flash/*.sh /mnt/flash/autoreload* /mnt/flash/artnet* /mnt/flash/startup-config /mnt/flash/*.log /mnt/flash/zerotouch-config"
+      line = "rm -rv /mnt/flash/.persist /mnt/flash/persist /mnt/flash/*.sh /mnt/flash/autoreload* /mnt/flash/artnet* /mnt/flash/startup-config /mnt/flash/*.log /mnt/flash/provision* /mnt/flash/zerotouch-config"
     }
   }
   transition {
