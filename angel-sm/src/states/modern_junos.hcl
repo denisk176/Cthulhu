@@ -116,8 +116,12 @@ state "ModernJunosWaitForBootloader" {
       string = "seconds... (press Ctrl-C to interrupt)"
     }
     action {
-      type = "SendControl"
-      char = "c"
+      type = "Repeat"
+      times = 10
+      action {
+        type = "SendControl"
+        char = "c"
+      }
     }
   }
 }

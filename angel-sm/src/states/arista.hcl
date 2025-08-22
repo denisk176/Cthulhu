@@ -13,17 +13,33 @@ state "SwitchDetect" {
       Vendor = "Arista"
     }
   }
+
+  transition {
+    target = "SwitchDetect"
+    trigger {
+      type   = "string"
+      string = "Could not load payload"
+    }
+    action {
+      type   = "AddDeviceInfo"
+      Vendor = "Arista"
+    }
+    action {
+      type = "AddDeviceInfo"
+      flag = "UnableToLoadAKernel"
+    }
+  }
 }
 
 state "AristaWaitForBootloader" {
   transition {
     target = "AristaWipeStartupConfig"
     trigger {
-      type = "string"
+      type   = "string"
       string = "Press Control-C now to enter Aboot shell"
     }
     action {
-      type = "Repeat"
+      type  = "Repeat"
       times = 10
       action {
         type = "SendControl"
@@ -37,12 +53,23 @@ state "AristaWipeStartupConfig" {
   transition {
     target = "AristaRebootAfterStartupConfigWipe"
     trigger {
-      type = "string"
+      type   = "string"
       string = "Aboot#"
     }
     action {
       type = "SendLine"
       line = "rm -rv /mnt/flash/.persist /mnt/flash/persist /mnt/flash/*.sh /mnt/flash/autoreload* /mnt/flash/artnet* /mnt/flash/startup-config /mnt/flash/*.log /mnt/flash/zerotouch-config"
+    }
+  }
+  transition {
+    target = "EndJob"
+    trigger {
+      type = "string"
+      string = "Booting flash"
+    }
+    action {
+      type = "AddDeviceInfo"
+      flag = "RaceConditionFailed"
     }
   }
 }
@@ -51,7 +78,7 @@ state "AristaRebootAfterStartupConfigWipe" {
   transition {
     target = "AristaBootloaderHook"
     trigger {
-      type = "string"
+      type   = "string"
       string = "Aboot#"
     }
   }
@@ -83,7 +110,7 @@ state "AristaWaitForReboot" {
   transition {
     target = "AristaLoggingIn"
     trigger {
-      type = "string"
+      type   = "string"
       string = "login:"
     }
     action {
@@ -97,7 +124,7 @@ state "AristaLoggingIn" {
   transition {
     target = "AristaVersionOutput"
     trigger {
-      type = "string"
+      type   = "string"
       string = "localhost>"
     }
     action {
@@ -111,7 +138,7 @@ state "AristaVersionOutput" {
   transition {
     target = "AristaEnable"
     trigger {
-      type = "string"
+      type   = "string"
       string = "localhost>"
     }
     action {
@@ -129,7 +156,7 @@ state "AristaEnable" {
   transition {
     target = "AristaEraseCores"
     trigger {
-      type = "string"
+      type   = "string"
       string = "localhost#"
     }
     action {
@@ -143,7 +170,7 @@ state "AristaEraseCores" {
   transition {
     target = "HookAristaCLI"
     trigger {
-      type = "string"
+      type   = "string"
       string = "localhost#"
     }
   }

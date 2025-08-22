@@ -4,7 +4,7 @@ use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use chrono::Utc;
-use maud::{Markup, html, DOCTYPE};
+use maud::{DOCTYPE, Markup, html};
 
 pub async fn header(
     State(state): State<WebState>,
@@ -58,7 +58,7 @@ pub async fn header(
                     "Controls:"
                 }
                 td {
-                    button onclick="abortJob('{{port.data.label}}')" {
+                    button onclick={ "abortJob('" (port.data.label) "')" } {
                         @if port.data.get_status().is_finished() {
                             "New Job"
                         } @else {
@@ -108,7 +108,7 @@ pub async fn footer(
     })
 }
 
-pub async fn port (
+pub async fn port(
     State(state): State<WebState>,
     Path(port_label): Path<String>,
 ) -> Result<Markup, Response> {

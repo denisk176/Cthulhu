@@ -22,6 +22,7 @@ include_dir = "0.7.4"
 mime_guess = "2.0.5"
 tower-http = { version = "0.6.6", features = ["catch-panic"] }
 maud = { version = "*", features = ["axum"] }
+tower = { version = "0.5.2", features = ["full"] }
 
 [package.metadata.deb]
 maintainer = "Roelf Wichertjes <contact@roelf.org>"

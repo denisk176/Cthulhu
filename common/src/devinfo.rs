@@ -21,6 +21,7 @@ pub enum DeviceInformation {
     ProvisioningFailed,
     ProvisioningSuccess,
     LoopDetected,
+    RaceConditionFailed,
 }
 
 impl DeviceInformation {
@@ -44,6 +45,7 @@ impl DeviceInformation {
             DeviceInformation::ProvisioningFailed => DeviceInformationType::Error,
             DeviceInformation::ProvisioningSuccess => DeviceInformationType::Info,
             DeviceInformation::LoopDetected => DeviceInformationType::Error,
+            DeviceInformation::RaceConditionFailed => DeviceInformationType::Error,
         }
     }
 }

@@ -69,7 +69,7 @@ pub async fn port_status(State(state): State<WebState>) -> Markup {
                                     }
                                     tr {
                                         td {
-                                            button onclick="abortJob('{{port.data.label}}')" {
+                                            button onclick={ "abortJob('" (port.data.label) "')" } {
                                                 @if port.data.get_status().is_finished() {
                                                     "New Job"
                                                 } @else {

@@ -2,21 +2,23 @@ use crate::manager::JobManager;
 use crate::mqtt::{BroadcastSender, MQTTSender};
 use crate::web::pages::{abort, restart_all};
 use crate::web::serial::serial_handler;
-use axum::Router;
 use axum::body::Body;
-use axum::extract::Path;
+use axum::extract::{Path, Request};
 use axum::http::{HeaderValue, StatusCode, header};
 use axum::response::{IntoResponse, Response};
 use axum::routing::get;
+use axum::{Router, middleware};
+use axum::middleware::Next;
 use cthulhu_config::heaven::HeavenConfig;
 use include_dir::{Dir, include_dir};
+use tower::ServiceBuilder;
 use tower_http::catch_panic::CatchPanicLayer;
 use tracing::info;
 
 mod pages;
 
-mod serial;
 mod helpers;
+mod serial;
 
 #[derive(Clone)]
 struct WebState {
@@ -46,7 +48,11 @@ pub async fn web_main(
         .route("/port/{port_label}/abort", get(abort))
         .route("/port/{port_label}/serial", get(serial_handler))
         .route("/assets/{*path}", get(static_path))
-        .layer(CatchPanicLayer::new())
+        .layer(
+            ServiceBuilder::new()
+                .layer(middleware::from_fn(set_static_cache_control))
+                .layer(CatchPanicLayer::new()),
+        )
         .with_state(state);
 
     info!("Starting web...");
@@ -75,4 +81,13 @@ async fn static_path(Path(path): Path<String>) -> impl IntoResponse {
             .body(Body::from(file.contents()))
             .unwrap(),
     }
+}
+
+async fn set_static_cache_control(request: Request, next: Next) -> Response {
+    let mut response = next.run(request).await;
+    response.headers_mut().insert(
+        header::CACHE_CONTROL,
+        HeaderValue::from_static("no-store"),
+    );
+    response
 }

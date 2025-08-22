@@ -45,17 +45,17 @@ state "JunosLogin" {
       flag = "StrangeCLIPrompt"
     }
   }
-  transition {
-    target = "JunosBackupImageCli1"
-    trigger {
-      type   = "string"
-      string = "Please re-install JUNOS"
-    }
-    action {
-      type = "SendLine"
-      line = "cli"
-    }
-  }
+  # transition {
+  #   target = "JunosBackupImageCli1"
+  #   trigger {
+  #     type   = "string"
+  #     string = "Please re-install JUNOS"
+  #   }
+  #   action {
+  #     type = "SendLine"
+  #     line = "cli"
+  #   }
+  # }
 }
 
 state "JunosEnterHappyCli" {
@@ -70,7 +70,7 @@ state "JunosEnterHappyCli" {
     }
     action {
       type = "SendLine"
-      line = "rm -rfv /var/tmp/autoreload.* /tmp/provision.* /tmp/autoreload.* /var/core/core.* /var/log/* /var/tmp/*"
+      line = "rm -rfv /var/tmp/autoreload* /tmp/provision* /tmp/autoreload* /var/core/core.* /var/log/* /var/tmp/*"
     }
     action {
       type = "SendLine"
