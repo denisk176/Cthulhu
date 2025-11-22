@@ -11,6 +11,8 @@ pub enum ProcessFunction {
     CaptureJunosVersion,
     CaptureChassisOutput,
     CaptureAristaVersion,
+    CaptureArubaAPModel,
+    CaptureArubaAPSerial,
 }
 
 impl ProcessFunction {
@@ -94,6 +96,37 @@ impl ProcessFunction {
                             version.as_str().to_string(),
                         ))
                         .await?;
+                    }
+                }
+                Ok(())
+            }
+            ProcessFunction::CaptureArubaAPModel => {
+                let r = RegexBuilder::new(r"^Model:\s+(?<model>[A-Za-z0-9-]+)$")
+                    .multi_line(true)
+                    .crlf(true)
+                    .build()?;
+                for cap in r.captures_iter(&data) {
+                    if let Some(model) = cap.name("model") {
+                        job.add_information(DeviceInformation::Model(
+                            model.as_str().to_string(),
+                        ))
+                            .await?;
+                    }
+                }
+                Ok(())
+            }
+            ProcessFunction::CaptureArubaAPSerial => {
+                let r = RegexBuilder::new(r"^\s+Serial\s+:\s+(?<serial>[A-Za-z0-9-]+)$")
+                    .multi_line(true)
+                    .crlf(true)
+                    .build()?;
+                for cap in r.captures_iter(&data) {
+                    if let Some(serial) = cap.name("serial") {
+                        job.add_information(DeviceInformation::SerialNumber(
+                            serial.as_str().to_string(),
+                        ))
+                            .await?;
+                        break;
                     }
                 }
                 Ok(())
