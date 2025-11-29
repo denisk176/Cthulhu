@@ -129,6 +129,20 @@ impl ProcessFunction {
                         break;
                     }
                 }
+
+                let r = RegexBuilder::new(r"^\s+Wired MAC\s+:\s+(?<mac>[A-Za-z0-9:]+)$")
+                    .multi_line(true)
+                    .crlf(true)
+                    .build()?;
+                for cap in r.captures_iter(&data) {
+                    if let Some(mac) = cap.name("mac") {
+                        job.add_information(DeviceInformation::MacAddress(
+                            mac.as_str().to_string(),
+                        ))
+                            .await?;
+                        break;
+                    }
+                }
                 Ok(())
             }
         }

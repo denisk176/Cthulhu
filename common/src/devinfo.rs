@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Serialize, Deserialize)]
 pub enum DeviceInformation {
     SerialNumber(String),
+    MacAddress(String),
     SoftwareVersion(String),
     Model(String),
     Vendor(String),
@@ -46,6 +47,7 @@ impl DeviceInformation {
             DeviceInformation::ProvisioningSuccess => DeviceInformationType::Info,
             DeviceInformation::LoopDetected => DeviceInformationType::Error,
             DeviceInformation::RaceConditionFailed => DeviceInformationType::Error,
+            DeviceInformation::MacAddress(_) => DeviceInformationType::Info,
         }
     }
 }
