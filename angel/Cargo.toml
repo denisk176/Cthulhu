@@ -1,7 +1,9 @@
 [package]
 name = "cthulhu-angel"
+description = "Cthulhu - Worker"
 version = "0.1.0"
 edition = "2024"
+license = "MIT"
 
 [dependencies]
 tracing = "0.1"
@@ -31,10 +33,16 @@ depends = "$auto"
 section = "utility"
 priority = "optional"
 assets = [
-    # target/release path is special, and gets replaced by cargo-deb with the actual target dir path.
     ["target/release/cthulhu-angel", "usr/bin/", "755"],
-    # both array and object syntaxes are equivalent:
     { source = "../angel.toml", dest = "/etc/cthulhu/angel/s1.toml.example", mode = "644"},
 ]
 maintainer-scripts = "debian/"
 systemd-units = { unit-name = "cthulhu-angel", enable = false }
+
+[package.metadata.generate-rpm]
+assets = [
+    { source = "../target/release/cthulhu-angel", dest = "/usr/bin/cthulhu-angel", mode = "755" },
+    { source = "../angel.toml", dest = "/etc/cthulhu/angel/s1.toml.example", mode = "644"},
+    { source = "debian/cthulhu-angel@.service", dest = "/usr/lib/systemd/system/cthulhu-angel@.service", mode = "644"},
+]
+

@@ -1,5 +1,7 @@
 [package]
 name = "cthulhu-heaven"
+license = "MIT"
+description = "Cthulhu - Heaven"
 version = "0.1.0"
 edition = "2024"
 
@@ -41,3 +43,10 @@ assets = [
 ]
 maintainer-scripts = "debian/"
 systemd-units = { enable = false }
+
+[package.metadata.generate-rpm]
+assets = [
+    { source = "../target/release/cthulhu-heaven", dest = "/usr/bin/cthulhu-heaven", mode = "755" },
+    { source = "../angel.toml", dest = "/etc/cthulhu/heaven.toml.example", mode = "644"},
+    { source = "debian/cthulhu-heaven.service", dest = "/usr/lib/systemd/system/cthulhu-heaven.service", mode = "644"},
+]
