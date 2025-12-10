@@ -13,6 +13,8 @@ pub enum ProcessFunction {
     CaptureAristaVersion,
     CaptureArubaAPModel,
     CaptureArubaAPSerial,
+    CaptureAristaAbootVersion,
+    ArbitraryDeviceInfo,
 }
 
 impl ProcessFunction {
@@ -21,9 +23,18 @@ impl ProcessFunction {
         job: &mut T,
         p: &mut SwitchExpect,
         data: &str,
-        _mat: &str,
+        mat: &str,
     ) -> color_eyre::Result<()> {
         match self {
+            ProcessFunction::ArbitraryDeviceInfo => {
+                let br = RegexBuilder::new(r"%%%%%(?<devinfo>[^%]+)%%%%%").multi_line(true).crlf(true).build()?;
+                for caps in br.captures_iter(mat) {
+                    let s = caps.name("devinfo").unwrap().as_str();
+                    let d: DeviceInformation = serde_json::from_str(s)?;
+                    job.add_information(d).await?;
+                }
+                Ok(())
+            }
             ProcessFunction::FixFS => {
                 let bdevregex = RegexBuilder::new(r"ufs: (?<device>[/a-zA-Z0-9]+) \(.*\)$")
                     .crlf(true)
@@ -96,6 +107,19 @@ impl ProcessFunction {
                             version.as_str().to_string(),
                         ))
                         .await?;
+                    }
+                }
+                Ok(())
+            }
+            ProcessFunction::CaptureAristaAbootVersion => {
+                let r = RegexBuilder::new(r"(?<aboot>[\d\.-]+)$")
+                    .multi_line(true).crlf(true).build()?;
+                for cap in r.captures_iter(&data) {
+                    if let Some(version) = cap.name("aboot") {
+                        job.add_information(DeviceInformation::BootloaderVersion(
+                            version.as_str().to_string(),
+                        ))
+                            .await?;
                     }
                 }
                 Ok(())

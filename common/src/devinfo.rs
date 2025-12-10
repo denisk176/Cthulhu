@@ -6,6 +6,7 @@ pub enum DeviceInformation {
     SerialNumber(String),
     MacAddress(String),
     SoftwareVersion(String),
+    BootloaderVersion(String),
     Model(String),
     Vendor(String),
     AttemptedToFixFilesystemIssues,
@@ -24,6 +25,7 @@ pub enum DeviceInformation {
     LoopDetected,
     RaceConditionFailed,
     BadFlashBlock,
+    SoftwareUpdatePerformed,
 }
 
 impl DeviceInformation {
@@ -50,6 +52,8 @@ impl DeviceInformation {
             DeviceInformation::RaceConditionFailed => DeviceInformationType::Error,
             DeviceInformation::MacAddress(_) => DeviceInformationType::Info,
             DeviceInformation::BadFlashBlock => DeviceInformationType::Warning,
+            DeviceInformation::BootloaderVersion(_) => DeviceInformationType::Info,
+            DeviceInformation::SoftwareUpdatePerformed => DeviceInformationType::Warning,
         }
     }
 }

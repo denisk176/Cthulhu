@@ -21,5 +21,6 @@ if grep -iq error /tmp/update.log; then
 fi
 echo "[PROVISION-S2-UPGRADE] Rebooting..."
 echo "PROVISION_REBOOT"
+echo "%%%%%\"SoftwareUpdatePerformed\"%%%%%"
 echo -e "request system power-off at now\nyes" | cli
 sleep 3600

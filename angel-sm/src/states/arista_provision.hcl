@@ -187,6 +187,18 @@ state "ProvisionAristaBash3" {
 
 state "ProvisionAristaRunning" {
   transition {
+    target = "ProvisionAristaRunning"
+    trigger {
+      type = "regex"
+      regex = "%%%%%(?<devinfo>[^%]+)%%%%%"
+    }
+    action {
+      type = "Function"
+      func = "ArbitraryDeviceInfo"
+    }
+  }
+
+  transition {
     target = "EndJob"
     trigger {
       type   = "string"
@@ -233,6 +245,18 @@ state "ProvisionAristaRunning" {
 
 state "ProvisionAristaFinish" {
   transition {
+    target = "ProvisionAristaFinish"
+    trigger {
+      type = "regex"
+      regex = "%%%%%(?<devinfo>[^%]+)%%%%%"
+    }
+    action {
+      type = "Function"
+      func = "ArbitraryDeviceInfo"
+    }
+  }
+
+  transition {
     target = "EndJob"
     trigger {
       type   = "string"
@@ -274,6 +298,18 @@ state "ProvisionAristaFinish" {
 }
 
 state "ProvisionAristaRestart" {
+  transition {
+    target = "ProvisionAristaRestart"
+    trigger {
+      type = "regex"
+      regex = "%%%%%(?<devinfo>[^%]+)%%%%%"
+    }
+    action {
+      type = "Function"
+      func = "ArbitraryDeviceInfo"
+    }
+  }
+
   transition {
     target = "EndJob"
     trigger {

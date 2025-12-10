@@ -6,6 +6,10 @@ use std::fmt::Display;
 use std::ops::Add;
 use crate::status::JobUpdate;
 
+fn variant_eq<T>(a: &T, b: &T) -> bool {
+    std::mem::discriminant(a) == std::mem::discriminant(b)
+}
+
 /// Current and historical data of a job.
 #[derive(Default, Debug, Serialize, Deserialize, Clone)]
 pub struct JobData {
@@ -38,6 +42,11 @@ impl JobData {
         self.info_items = HashSet::new();
     }
 
+    pub fn add_info_item(&mut self, i: DeviceInformation) {
+        self.info_items.retain(|x| !variant_eq(x, &i));
+        self.info_items.insert(i);
+    }
+
     pub fn update(&mut self, update: JobUpdate) {
         match update {
             JobUpdate::JobStageTransition(d, s) => {
@@ -51,7 +60,7 @@ impl JobData {
                 self.job_ended = Some(d);
             }
             JobUpdate::JobNewInfoItem(i) => {
-                self.info_items.insert(i);
+                self.add_info_item(i);
             }
             JobUpdate::JobFullData(d) => {
                 *self = d;

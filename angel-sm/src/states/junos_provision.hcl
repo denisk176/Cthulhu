@@ -262,6 +262,18 @@ state "ProvisionJunos11" {
 
 state "ProvisionJunosRunning" {
   transition {
+    target = "ProvisionJunosRunning"
+    trigger {
+      type = "regex"
+      regex = "%%%%%(?<devinfo>[^%]+)%%%%%"
+    }
+    action {
+      type = "Function"
+      func = "ArbitraryDeviceInfo"
+    }
+  }
+
+  transition {
     target = "EndJob"
     trigger {
       type   = "string"
@@ -332,6 +344,18 @@ state "ProvisionJunosRunning" {
 
 state "ProvisionJunosFinish" {
   transition {
+    target = "ProvisionJunosFinish"
+    trigger {
+      type = "regex"
+      regex = "%%%%%(?<devinfo>[^%]+)%%%%%"
+    }
+    action {
+      type = "Function"
+      func = "ArbitraryDeviceInfo"
+    }
+  }
+
+  transition {
     target = "EndJob"
     trigger {
       type   = "string"
@@ -378,6 +402,18 @@ state "ProvisionJunosFinish" {
 
 state "ProvisionJunosWaitReboot" {
   transition {
+    target = "ProvisionJunosWaitReboot"
+    trigger {
+      type = "regex"
+      regex = "%%%%%(?<devinfo>[^%]+)%%%%%"
+    }
+    action {
+      type = "Function"
+      func = "ArbitraryDeviceInfo"
+    }
+  }
+
+  transition {
     target = "ProvisionJunosRebootLogin"
     trigger {
       type   = "string"
@@ -403,6 +439,18 @@ state "ProvisionJunosWaitReboot" {
 }
 
 state "ProvisionJunosRebootLogin" {
+  transition {
+    target = "ProvisionJunosRebootLogin"
+    trigger {
+      type = "regex"
+      regex = "%%%%%(?<devinfo>[^%]+)%%%%%"
+    }
+    action {
+      type = "Function"
+      func = "ArbitraryDeviceInfo"
+    }
+  }
+
   transition {
     target = "JunosLogin"
     trigger {

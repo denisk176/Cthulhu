@@ -39,6 +39,10 @@ state "AristaWaitForBootloader" {
       string = "Press Control-C now to enter Aboot shell"
     }
     action {
+      type = "Function"
+      func = "CaptureAristaAbootVersion"
+    }
+    action {
       type  = "Repeat"
       times = 10
       action {

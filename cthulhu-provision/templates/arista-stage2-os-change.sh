@@ -26,6 +26,7 @@ CONSOLESPEED=9600
 SWI=flash:/$TARGET_SWI
 EOF
   echo "[PROVISION-S2-UPGRADE] Finished OS upgrade!"
+  echo -en "%%%%%\"SoftwareUpdatePerformed\"%%%%%\r\n" >> $REALTTY
   echo -en "PROVISION_REBOOT\r\n" >> $REALTTY
 }
 
