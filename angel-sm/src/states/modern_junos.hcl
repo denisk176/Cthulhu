@@ -229,7 +229,6 @@ state "ModernJunosQFX1" {
   }
 }
 
-
 state "ModernJunosQFX2" {
   transition {
     target = "ModernJunosQFX2"
