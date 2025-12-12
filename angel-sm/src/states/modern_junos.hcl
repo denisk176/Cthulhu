@@ -350,6 +350,13 @@ state "ModernJunosAwaitZeroizeFinish" {
       regex = "FreeBSD/[AaipP]"
     }
   }
+  transition {
+    target = "ModernJunosAwaitZeroizeFinish2"
+    trigger {
+      type = "string"
+      string = "mgd: warning: activating factory configuration"
+    }
+  }
 }
 
 state "ModernJunosAwaitZeroizeFinish2" {
