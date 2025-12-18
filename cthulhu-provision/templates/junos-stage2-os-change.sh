@@ -8,7 +8,7 @@ pfail() {
 echo "[PROVISION-S2-UPGRADE] Configuring NTP..."
 {
   echo "configure"
-  echo "set system ntp server 172.17.0.1"
+  echo "set system ntp server {{ntp_server}}"
   echo "set system ntp threshold 600 action accept"
   echo "commit and-quit"
   } | /usr/sbin/cli

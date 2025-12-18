@@ -17,6 +17,8 @@ pub struct ProvisionConfig {
 
     #[serde(rename = "AutoReload")]
     pub autoreload_config: ProvisionAutoReloadConfig,
+
+    pub ntp_server: String,
 }
 
 impl LoadableConfig for ProvisionConfig {}

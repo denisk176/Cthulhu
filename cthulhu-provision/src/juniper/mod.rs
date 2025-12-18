@@ -45,6 +45,7 @@ struct JunosStage2Template {
 struct JunosStage2UpgradeTemplate {
     base_url: String,
     target_jinstall: String,
+    ntp_server: String,
 }
 
 #[derive(Deserialize, Debug)]
@@ -62,6 +63,7 @@ async fn get_stage2(State(state): State<AppStateHandle>, Host(host): Host, Query
                 let data = JunosStage2UpgradeTemplate {
                     base_url: format!("http://{host}"),
                     target_jinstall: os_mapping.os_image.file_name().unwrap().to_str().unwrap().to_string(),
+                    ntp_server: state.ntp_server.clone(),
                 };
 
                 return (StatusCode::OK, data.render().unwrap()).into_response();

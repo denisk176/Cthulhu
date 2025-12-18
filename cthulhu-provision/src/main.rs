@@ -37,6 +37,7 @@ async fn main() -> color_eyre::Result<()> {
         config_server: config.config_server.clone(),
         os_mappings: config.model_os_mappings.clone(),
         autoreload: config.autoreload_config.clone(),
+        ntp_server: config.ntp_server.clone(),
     });
 
     let app = Router::new()

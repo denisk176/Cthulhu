@@ -5,6 +5,7 @@ pub struct AppState {
     pub config_server: String,
     pub os_mappings: Vec<ProvisionModelOSMapping>,
     pub autoreload: ProvisionAutoReloadConfig,
+    pub ntp_server: String,
 }
 
 pub type AppStateHandle = Arc<AppState>;
