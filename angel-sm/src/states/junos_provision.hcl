@@ -200,8 +200,27 @@ state "ProvisionJunos10" {
     }
     action {
       type = "SendLine"
+      line = "/bin/sh"
+    }
+    action {
+      type = "SendLine"
+      line = "export REALTTY=`tty`"
+    }
+    action {
+      type = "Send"
+      text = "export PING_TGT=\""
+    }
+    action {
+      type = "SendConfigValue"
+      key  = "provision_ping_target"
+    }
+    action {
+      type = "SendLine"
+      line = "\""
+    }
+    action {
+      type = "SendLine"
       line = <<EOT
-/bin/sh
 cat > /tmp/bootstrap.sh << EOF
 #!/bin/sh
 pvfail() {
