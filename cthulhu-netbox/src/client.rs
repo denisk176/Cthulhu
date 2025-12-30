@@ -4,6 +4,7 @@ use reqwest::{header, Client, Url};
 use reqwest::header::HeaderMap;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
+use tracing::warn;
 
 pub struct NetboxClient {
     http_client: Client,
@@ -26,24 +27,41 @@ impl NetboxClient {
 
     pub async fn get_device_id_by_serial(&self, sn: &str) -> color_eyre::Result<NetboxDeviceID> {
         let u = format!("{}/api/dcim/devices/", self.base_url);
-        let u = Url::parse_with_params(&u, &[("serial", sn)])?;
-        let resp = self.http_client.get(u).send().await?;
-        let resp = resp.error_for_status()?;
-        let resp: NetboxPagedAPIResponse<NetboxDeviceAPIResponse> = resp.json().await?;
-        if let Some(d) = resp.results.first() {
-            Ok(d.id)
-        } else {
-            Err(eyre!("unable to fetch device by serial"))
+        let mut retries = 0;
+        loop {
+            let u = Url::parse_with_params(&u, &[("serial", sn)])?;
+            let resp = self.http_client.get(u).send().await?;
+            if resp.status().is_server_error() && retries < 3 {
+                retries = retries + 1;
+                warn!("Error fetching device {sn}, retry...");
+                continue;
+            }
+            let resp = resp.error_for_status()?;
+            let resp: NetboxPagedAPIResponse<NetboxDeviceAPIResponse> = resp.json().await?;
+            if let Some(d) = resp.results.first() {
+                return Ok(d.id)
+            } else {
+                return Err(eyre!("unable to fetch device by serial"))
+            }
         }
     }
 
     pub async fn set_device_status(&self, id: NetboxDeviceID, status: &str) -> color_eyre::Result<()> {
         let u = format!("{}/api/dcim/devices/{}/", self.base_url, id);
         let body = json!({ "status": status });
-        let resp = self.http_client.patch(&u)
-            .json(&body)
-            .send().await?;
-        let _resp = resp.error_for_status()?;
+        let mut retries = 0;
+        loop {
+            let resp = self.http_client.patch(&u)
+                .json(&body)
+                .send().await?;
+            if resp.status().is_server_error() && retries < 3 {
+                retries = retries + 1;
+                warn!("Error updating device {id}, retry...");
+            } else {
+                let _resp = resp.error_for_status()?;
+                break;
+            }
+        }
         Ok(())
     }
 
@@ -56,10 +74,19 @@ impl NetboxClient {
             custom_fields: Default::default(),
         };
         let u = format!("{}/api/extras/journal-entries/", self.base_url);
-        let resp = self.http_client.post(&u)
-            .json(&body)
-            .send().await?;
-        let _resp = resp.error_for_status()?;
+        let mut retries = 0;
+        loop {
+            let resp = self.http_client.post(&u)
+                .json(&body)
+                .send().await?;
+            if resp.status().is_server_error() && retries < 3 {
+                retries = retries + 1;
+                warn!("Error updating device {id}, retry...");
+            } else {
+                let _resp = resp.error_for_status()?;
+                break;
+            }
+        }
         Ok(())
     }
 }
