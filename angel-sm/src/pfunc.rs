@@ -57,11 +57,17 @@ impl ProcessFunction {
                 Ok(())
             }
             ProcessFunction::CaptureJunosVersion => {
-                let r = RegexBuilder::new(r"(?:Model: (?<model>[a-zA-Z0-9\-]+)$)|(?:Junos: (?<version>[0-9a-zA-Z\-\.]+)$)")
+                let r = RegexBuilder::new(r"(?:Model: (?<model>[a-zA-Z0-9\-]+)$)|(?:Junos: (?<version>[0-9a-zA-Z\-\.]+)$)|(?:JUNOS Base OS boot \[(?<version2>[0-9a-zA-Z\-\.]+)\]$)")
                     .multi_line(true).crlf(true).build()?;
                 for cap in r.captures_iter(&data) {
                     if let Some(model) = cap.name("model") {
                         job.add_information(DeviceInformation::Model(model.as_str().to_string()))
+                            .await?;
+                    }
+                    if let Some(version) = cap.name("version2") {
+                        job.add_information(DeviceInformation::SoftwareVersion(
+                            version.as_str().to_string(),
+                        ))
                             .await?;
                     }
                     if let Some(version) = cap.name("version") {
