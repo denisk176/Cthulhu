@@ -81,7 +81,7 @@ impl NetboxClient {
                 .send().await?;
             if resp.status().is_server_error() && retries < 3 {
                 retries = retries + 1;
-                warn!("Error updating device {id}, retry...");
+                warn!("Error updating device {device_id}, retry...");
             } else {
                 let _resp = resp.error_for_status()?;
                 break;
