@@ -45,6 +45,13 @@ state "JunosLogin" {
     target = "JunosEnterHappyCli"
     trigger {
       type  = "regex"
+      regex = "root@:~"
+    }
+  }
+  transition {
+    target = "JunosEnterHappyCli"
+    trigger {
+      type  = "regex"
       regex = "root@[A-Za-z0-9\\-]+:LC:0%"
     }
     action {
@@ -87,7 +94,7 @@ state "JunosEnterHappyCli2" {
     target = "JunosEnterHappyCli3"
     trigger {
       type  = "regex"
-      regex = "root@[A-Za-z0-9\\-]*:[A-Z]+:0%"
+      regex = "root@(?:[A-Za-z0-9\\-]*:[A-Z]+:0%|:~)"
     }
     action {
       type = "SendLine"
@@ -101,7 +108,7 @@ state "JunosEnterHappyCli3" {
     target = "JunosEnterHappyCli4"
     trigger {
       type  = "regex"
-      regex = "root@[A-Za-z0-9\\-]*:[A-Z]+:0%"
+      regex = "root@(?:[A-Za-z0-9\\-]*:[A-Z]+:0%|:~)"
     }
     action {
       type = "SendLine"
@@ -115,7 +122,7 @@ state "JunosEnterHappyCli4" {
     target = "JunosEnterHappyCli5"
     trigger {
       type  = "regex"
-      regex = "root@[A-Za-z0-9\\-]*:[A-Z]+:0%"
+      regex = "root@(?:[A-Za-z0-9\\-]*:[A-Z]+:0%|:~)"
     }
     action {
       type = "SendLine"
@@ -140,7 +147,7 @@ state "JunosEnterHappyCli5" {
     target = "JunosHappyCli"
     trigger {
       type  = "regex"
-      regex = "root@[A-Za-z0-9\\-]*:[A-Z]+:0%"
+      regex = "root@(?:[A-Za-z0-9\\-]*:[A-Z]+:0%|:~)"
     }
     action {
       type = "SendLine"
@@ -319,10 +326,6 @@ state "JunosChassisOutput" {
       type = "Function"
       func = "CaptureChassisOutput"
     }
-    action {
-      type = "SendLine"
-      line = ""
-    }
   }
 }
 
@@ -341,7 +344,60 @@ state "HookJunosCLI" {
 
 state "JunosPoweroff" {
   transition {
-    target = "JunosPoweroffConfirm"
+    target = "JunosPoweroff2"
+    trigger {
+      type  = "regex"
+      regex = "root(@[A-Za-z0-9\\-]+)?>"
+    }
+    action {
+      type = "SendLine"
+      line = "start shell"
+    }
+  }
+}
+
+state "JunosPoweroff2" {
+  transition {
+    target = "JunosPoweroff3"
+    trigger {
+      type  = "regex"
+      regex = "root@(?:[A-Za-z0-9\\-]*:[A-Z]+:0%|:~)"
+    }
+    action {
+      type = "SendLine"
+      line = "sysctl hw.product.pvi.config.platform.vmhost_support"
+    }
+  }
+}
+
+state "JunosPoweroff3" {
+  transition {
+    target = "JunosPoweroffClassic"
+    trigger {
+      type  = "regex"
+      regex = "root@(?:[A-Za-z0-9\\-]*:[A-Z]+:0%|:~)"
+    }
+    action {
+      type = "SendLine"
+      line = "exit"
+    }
+  }
+  transition {
+    target = "JunosPoweroffVMHost"
+    trigger {
+      type  = "string"
+      string = "hw.product.pvi.config.platform.vmhost_support: 1"
+    }
+    action {
+      type = "SendLine"
+      line = "exit"
+    }
+  }
+}
+
+state "JunosPoweroffClassic" {
+  transition {
+    target = "JunosPoweroffClassicConfirm"
     trigger {
       type  = "regex"
       regex = "root(@[A-Za-z0-9\\-]+)?>"
@@ -353,7 +409,7 @@ state "JunosPoweroff" {
   }
 }
 
-state "JunosPoweroffConfirm" {
+state "JunosPoweroffClassicConfirm" {
   transition {
     target = "JunosWaitForPoweroff"
     trigger {
@@ -366,14 +422,42 @@ state "JunosPoweroffConfirm" {
     }
   }
   transition {
-    target = "JunosPoweroffConfirm"
+    target = "JunosPoweroffClassicConfirm"
     trigger {
-      type   = "string"
-      string = "error: command is not valid"
+      type  = "regex"
+      regex = "root(@[A-Za-z0-9\\-]+)?>"
     }
     action {
       type = "SendLine"
       line = "request system halt at now"
+    }
+  }
+}
+
+state "JunosPoweroffVMHost" {
+  transition {
+    target = "JunosPoweroffVMHostConfirm"
+    trigger {
+      type  = "regex"
+      regex = "root(@[A-Za-z0-9\\-]+)?>"
+    }
+    action {
+      type = "SendLine"
+      line = "request vmhost power-off"
+    }
+  }
+}
+
+state "JunosPoweroffVMHostConfirm" {
+  transition {
+    target = "JunosWaitForPoweroff"
+    trigger {
+      type   = "string"
+      string = "[yes,no] (no)"
+    }
+    action {
+      type = "SendLine"
+      line = "yes"
     }
   }
 }

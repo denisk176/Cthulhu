@@ -124,7 +124,32 @@ state "ModernJunosWaitForBootloader" {
       }
     }
   }
+  transition {
+    target = "ModernJunosQFXBypass"
+    trigger {
+      type   = "string"
+      string = "CBDE_SFP_00.21_01.01"
+    }
+  }
 }
+
+state "ModernJunosQFXBypass" {
+      transition {
+        target = "ModernJunosBootloader1"
+        trigger {
+          type = "string"
+          string = "seconds... (press Ctrl-C to interrupt)"
+        }
+        action {
+          type = "Repeat"
+          times = 10
+          action {
+            type = "SendControl"
+            char = "c"
+          }
+        }
+      }
+  }
 
 state "ModernJunosEvo1" {
   transition {
@@ -305,6 +330,17 @@ state "ModernJunosAwaitRecoveryShell" {
     trigger {
       type = "regex"
       regex = "\\{[a-z0-9]+:0\\}"
+    }
+    action {
+      type = "SendLine"
+      line = "request system zeroize"
+    }
+  }
+  transition {
+    target = "ModernJunosAnswerZeroize"
+    trigger {
+      type = "string"
+      string = "root>"
     }
     action {
       type = "SendLine"
