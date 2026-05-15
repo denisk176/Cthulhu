@@ -38,6 +38,7 @@ async fn get_stage1(Host(host): Host) -> impl IntoResponse {
 #[template(path = "junos-stage2.sh")]
 struct JunosStage2Template {
     base_url: String,
+    autoreload: bool,
 }
 
 #[derive(Template)]
@@ -73,6 +74,7 @@ async fn get_stage2(State(state): State<AppStateHandle>, Host(host): Host, Query
 
     let data = JunosStage2Template {
         base_url: format!("http://{host}"),
+        autoreload: state.autoreload.is_some(),
     };
 
     (StatusCode::OK, data.render().unwrap()).into_response()
@@ -112,10 +114,14 @@ async fn static_path(State(state): State<AppStateHandle>, Path(path): Path<Strin
             let data = file.contents();
             let data = match String::from_utf8(data.to_vec()) {
                 Ok(s) => {
-                    s.replace("%%{snafu_host}%%", state.autoreload.snafu_host.as_str())
-                        .replace("%%{deploy_host}%%", state.autoreload.deploy_host.as_str())
-                        .replace("%%{ping_target}%%", state.autoreload.ping_target.as_str())
-                        .into_bytes()
+                    if let Some(autoreload) = state.autoreload.as_ref() {
+                        s.replace("%%{snafu_host}%%", autoreload.snafu_host.as_str())
+                            .replace("%%{deploy_host}%%", autoreload.deploy_host.as_str())
+                            .replace("%%{ping_target}%%", autoreload.ping_target.as_str())
+                            .into_bytes()
+                    } else {
+                        s.into_bytes()
+                    }
                 }
                 Err(_) => data.to_vec(),
             };

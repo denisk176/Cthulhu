@@ -16,7 +16,7 @@ pub struct ProvisionConfig {
     pub model_os_mappings: Vec<ProvisionModelOSMapping>,
 
     #[serde(rename = "AutoReload")]
-    pub autoreload_config: ProvisionAutoReloadConfig,
+    pub autoreload_config: Option<ProvisionAutoReloadConfig>,
 
     pub ntp_server: String,
 }

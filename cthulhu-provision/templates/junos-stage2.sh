@@ -1,6 +1,4 @@
 #!/bin/sh
-FILE_LIST="autoreload.cron autoreload.sh"
-
 CONFIG_FILE=/tmp/provision.config
 load_file=/tmp/provision.load
 check_file=/tmp/provision.check
@@ -37,11 +35,15 @@ echo "[PROVISION-S2] Attempting to configure VCP ports to act as network ports..
 echo "request virtual-chassis mode network-port" | cli
 echo '[PROVISION-S2] VCP ports complete!'
 
-for f in $FILE_LIST ; do
+{% if autoreload %}
+for f in autoreload.cron autoreload.sh ; do
         echo "[PROVISION-S2] Retrieving $f..."
         fetch -o /var/tmp/$f "{{base_url}}/provision/juniper/assets/$f" || pfail
+        if [[ "$f" = *.sh ]]; then
+          chmod +x "$f"
+        fi
 done
-chmod +x /var/tmp/autoreload.sh
+{% endif %}
 
 SERIALNO=`sysctl hw.chassis.serialid | awk '{ print $2 }'`
 echo "[PROVISION-S2] Detected serial number: $SERIALNO"
@@ -80,8 +82,10 @@ echo "[PROVISION-S2] Applying config file..."
 echo "[PROVISION-S2] Saving rescue config..."
 echo "request system configuration rescue save" | /usr/sbin/cli
 
+{% if autoreload %}
 echo "[PROVISION-S2] Enabling crontab..."
 crontab /var/tmp/autoreload.cron
 crontab -l
+{% endif %}
 
 echo '[PROVISION-S2] Provisioning complete!'

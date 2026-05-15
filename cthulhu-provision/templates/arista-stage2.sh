@@ -34,10 +34,12 @@ function main() {
         clean_nonboot_swi
         SERIAL_NUMBER=$(awk -F" " '/^SerialNumber: / {print $2}' /etc/fdl)
         echo "[PROVISION-S2] Detected serial number: $SERIAL_NUMBER"
+{% if autoreload %}
         for file in autoreload.py autoreload.sh autoreload_legacy.sh; do
                 echo "[PROVISION-S2] Fetching file $file to /mnt/flash/$file..."
                 curl -o "/mnt/flash/$file" "{{base_url}}/provision/arista/assets/$file"
         done
+{% endif %}
         S=0
         for i in 1 2 3 4 5; do
                 S=1
