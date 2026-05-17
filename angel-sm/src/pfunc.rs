@@ -15,6 +15,8 @@ pub enum ProcessFunction {
     CaptureArubaAPSerial,
     CaptureAristaAbootVersion,
     ArbitraryDeviceInfo,
+    CaptureHPSwitchModel,
+    CaptureHPSwitchSerial,
 }
 
 impl ProcessFunction {
@@ -171,6 +173,42 @@ impl ProcessFunction {
                         ))
                             .await?;
                         break;
+                    }
+                }
+                Ok(())
+            }
+            ProcessFunction::CaptureHPSwitchModel => {
+                let r = RegexBuilder::new(r"(?:HP (?<model>[^\s]+) Switch|ROM Version: (?<bootloader>[^\s]+))")
+                    .multi_line(true)
+                    .crlf(true)
+                    .build()?;
+                for cap in r.captures_iter(&data) {
+                    if let Some(model) = cap.name("model") {
+                        job.add_information(DeviceInformation::Model(
+                            model.as_str().to_string(),
+                        ))
+                            .await?;
+                    }
+                    if let Some(version) = cap.name("bootloader") {
+                        job.add_information(DeviceInformation::BootloaderVersion(
+                            version.as_str().to_string(),
+                        ))
+                            .await?;
+                    }
+                }
+                Ok(())
+            }
+            ProcessFunction::CaptureHPSwitchSerial => {
+                let r = RegexBuilder::new(r"serialNumber=(?<serial>[^\s]+),")
+                    .multi_line(true)
+                    .crlf(true)
+                    .build()?;
+                for cap in r.captures_iter(&data) {
+                    if let Some(serial) = cap.name("serial") {
+                        job.add_information(DeviceInformation::SerialNumber(
+                            serial.as_str().to_string(),
+                        ))
+                            .await?;
                     }
                 }
                 Ok(())
