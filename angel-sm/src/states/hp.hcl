@@ -45,6 +45,10 @@ state "HPWaitForBootloader2" {
       string = "Select profile"
     }
     action {
+      type = "Function"
+      func = "CaptureHPOSVersionBanner"
+    }
+    action {
       type = "Send"
       text = "0"
     }

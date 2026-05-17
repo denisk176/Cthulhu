@@ -17,6 +17,7 @@ pub enum ProcessFunction {
     ArbitraryDeviceInfo,
     CaptureHPSwitchModel,
     CaptureHPSwitchSerial,
+    CaptureHPOSVersionBanner,
 }
 
 impl ProcessFunction {
@@ -178,7 +179,7 @@ impl ProcessFunction {
                 Ok(())
             }
             ProcessFunction::CaptureHPSwitchModel => {
-                let r = RegexBuilder::new(r"(?:HP (?<model>[^\s]+) Switch|ROM Version: (?<bootloader>[^\s]+))")
+                let r = RegexBuilder::new(r"(?:HP (?<model>[^\s]+) Switch|^\s*ROM Version\s*:\s*(?<bootloader>[^\s]+)|System Description\s*:\s*(?<model2>[^\s]+)|(Serial Number\s*:\s*(?<serial>[^\s]+)))")
                     .multi_line(true)
                     .crlf(true)
                     .build()?;
@@ -186,6 +187,18 @@ impl ProcessFunction {
                     if let Some(model) = cap.name("model") {
                         job.add_information(DeviceInformation::Model(
                             model.as_str().to_string(),
+                        ))
+                            .await?;
+                    }
+                    if let Some(model) = cap.name("model2") {
+                        job.add_information(DeviceInformation::Model(
+                            model.as_str().to_string(),
+                        ))
+                            .await?;
+                    }
+                    if let Some(serial) = cap.name("serial") {
+                        job.add_information(DeviceInformation::SerialNumber(
+                            serial.as_str().to_string(),
                         ))
                             .await?;
                     }
@@ -207,6 +220,21 @@ impl ProcessFunction {
                     if let Some(serial) = cap.name("serial") {
                         job.add_information(DeviceInformation::SerialNumber(
                             serial.as_str().to_string(),
+                        ))
+                            .await?;
+                    }
+                }
+                Ok(())
+            }
+            ProcessFunction::CaptureHPOSVersionBanner => {
+                let r = RegexBuilder::new(r"1\. Primary Software Image\s*\[(?<version>[^\s]+)\]")
+                    .multi_line(true)
+                    .crlf(true)
+                    .build()?;
+                for cap in r.captures_iter(&data) {
+                    if let Some(version) = cap.name("version") {
+                        job.add_information(DeviceInformation::SoftwareVersion(
+                            version.as_str().to_string(),
                         ))
                             .await?;
                     }
